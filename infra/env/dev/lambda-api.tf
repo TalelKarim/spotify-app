@@ -35,7 +35,7 @@ locals {
 }
 
 module "api_lambdas" {
-  source   = "../../../modules/lambda"
+  source   = "../../modules/lambda"
   for_each = local.api_lambdas
 
   function_name = "spotify-dev-${each.key}"

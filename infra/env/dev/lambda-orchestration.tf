@@ -13,7 +13,7 @@ locals {
 }
 
 module "orchestration_lambdas" {
-  source   = "../../../modules/lambda"
+  source   = "../../modules/lambda"
   for_each = local.orchestration_lambdas
 
   function_name = "spotify-dev-${each.key}"

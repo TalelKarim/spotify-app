@@ -1,29 +1,22 @@
 locals {
-  event_lambdas = {
-    event_store_listening_event = {
-      role = module.iam.lambda_events_role_arn
-      env = {
-        LISTENING_EVENTS_TABLE = module.dynamodb.listening_events_table_name
-      }
-    }
-
-    event_update_track_stats = {
+  tech_lambdas = {
+    tech_ingest_audio_metadata = {
       role = module.iam.lambda_events_role_arn
       env = {
         TRACKS_TABLE = module.dynamodb.tracks_table_name
       }
     }
 
-    event_publish_notifications = {
+    tech_reindex_opensearch = {
       role = module.iam.lambda_events_role_arn
       env  = {}
     }
   }
 }
 
-module "event_lambdas" {
-  source   = "../../../modules/lambda"
-  for_each = local.event_lambdas
+module "tech_lambdas" {
+  source   = "../../modules/lambda"
+  for_each = local.tech_lambdas
 
   function_name = "spotify-dev-${each.key}"
   role_arn      = each.value.role
