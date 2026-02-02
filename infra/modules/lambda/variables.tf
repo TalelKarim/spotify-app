@@ -44,3 +44,8 @@ variable "sqs_queue_arns" {
   type    = list(string)
   default = []
 }
+
+
+variable "lambda_role_name" {
+  type = string
+}
