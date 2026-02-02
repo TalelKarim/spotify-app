@@ -20,7 +20,7 @@ locals {
         TRACKS_TABLE = module.dynamodb.tracks_table_name
       }
 
-      sqs_link = false
+      sqs_link       = false
       sqs_queue_arns = []
     }
 
@@ -29,7 +29,7 @@ locals {
 
       env = {}
 
-      sqs_link = false
+      sqs_link       = false
       sqs_queue_arns = []
     }
   }
