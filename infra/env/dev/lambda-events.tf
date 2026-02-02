@@ -2,7 +2,6 @@ locals {
   event_lambdas = {
     event_store_listening_event = {
       role = module.iam.lambda_events_role_arn
-      lambda_role_name = module.iam.
 
       env = {
         LISTENING_EVENTS_TABLE = module.dynamodb.listening_events_table_name
