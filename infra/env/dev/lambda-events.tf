@@ -45,7 +45,6 @@ module "event_lambdas" {
   role_arn      = each.value.role
   handler       = "handler.main"
   package_path  = "../../../app/lambdas/${each.key}.zip"
-  lambda_role_name = each.value.r
 
   environment_variables = each.value.env
 
