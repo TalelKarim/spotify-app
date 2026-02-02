@@ -2,24 +2,40 @@ locals {
   event_lambdas = {
     event_store_listening_event = {
       role = module.iam.lambda_events_role_arn
+
       env = {
         LISTENING_EVENTS_TABLE = module.dynamodb.listening_events_table_name
       }
+
+      sqs_link = true
+      sqs_queue_arns = [
+        module.listening_events_queue.queue_arn
+      ]
     }
 
     event_update_track_stats = {
       role = module.iam.lambda_events_role_arn
+
       env = {
         TRACKS_TABLE = module.dynamodb.tracks_table_name
       }
+
+      sqs_link = false
+      sqs_queue_arns = []
     }
 
     event_publish_notifications = {
       role = module.iam.lambda_events_role_arn
-      env  = {}
+
+      env = {}
+
+      sqs_link = false
+      sqs_queue_arns = []
     }
   }
 }
+
+
 
 module "event_lambdas" {
   source   = "../../modules/lambda"
@@ -31,4 +47,7 @@ module "event_lambdas" {
   package_path  = "../../../app/lambdas/${each.key}.zip"
 
   environment_variables = each.value.env
+
+  sqs_link       = each.value.sqs_link
+  sqs_queue_arns = each.value.sqs_queue_arns
 }

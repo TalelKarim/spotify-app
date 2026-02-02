@@ -33,3 +33,14 @@ variable "environment_variables" {
   type    = map(string)
   default = {}
 }
+
+
+variable "sqs_link" {
+  type    = bool
+  default = false
+}
+
+variable "sqs_queue_arns" {
+  type    = list(string)
+  default = []
+}
