@@ -46,6 +46,3 @@ variable "sqs_queue_arns" {
 }
 
 
-variable "lambda_role_name" {
-  type = string
-}
