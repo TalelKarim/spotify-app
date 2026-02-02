@@ -3,6 +3,6 @@ variable "queue_name" {
 }
 
 variable "allow_eventbridge" {
-  type = bool
+  type    = bool
   default = false
 }

@@ -5,7 +5,7 @@ module "eventbridge" {
   rule_name = "spotify-dev-track-played"
 
   event_pattern = jsonencode({
-    source = ["spotify.api"]
+    source      = ["spotify.api"]
     detail-type = ["TrackPlayed"]
   })
 }
