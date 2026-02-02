@@ -108,6 +108,30 @@ resource "aws_iam_policy" "lambda_kms" {
   })
 }
 
+
+############################
+# SQS Policies
+############################
+
+
+resource "aws_iam_policy" "lambda_sqs_consume" {
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "sqs:ReceiveMessage",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes",
+        "sqs:ChangeMessageVisibility"
+      ]
+      Resource = var.sqs_queue_arn
+    }]
+  })
+}
+
+
+
 ############################
 # Attach policies to roles
 ############################
@@ -120,6 +144,12 @@ resource "aws_iam_role_policy_attachment" "api_logs" {
 resource "aws_iam_role_policy_attachment" "events_logs" {
   role       = aws_iam_role.lambda_events.name
   policy_arn = aws_iam_policy.lambda_logs.arn
+}
+
+
+resource "aws_iam_role_policy_attachment" "sqs_access" {
+  role       = aws_iam_role.lambda_events.name
+  policy_arn = aws_iam_policy.lambda_sqs_consume.arn
 }
 
 resource "aws_iam_role_policy_attachment" "steps_logs" {
