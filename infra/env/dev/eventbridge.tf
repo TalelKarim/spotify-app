@@ -16,3 +16,14 @@ module "rule_track_played_to_sqs" {
 }
 
 
+module "rule_track_played_to_stepfn" {
+  source = "../../modules/eventbridge_rule"
+
+  bus_name  = module.eventbridge_bus.name
+  rule_name = "spotify-dev-track-played-to-stepfn"
+
+  event_pattern = jsonencode({
+    source      = ["spotify.api"]
+    detail-type = ["TrackPlayed"]
+  })
+}
