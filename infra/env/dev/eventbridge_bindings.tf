@@ -6,11 +6,9 @@ resource "aws_cloudwatch_event_target" "eventbridge_to_sqs" {
   arn            = module.listening_events_queue.queue_arn
 }
 
-
-
-
-resource "aws_lambda_event_source_mapping" "sqs_to_event_lambda" {
-  event_source_arn = module.listening_events_queue.queue_arn
-  function_name    = module.event_lambdas["event_store_listening_event"].lambda_arn
-  batch_size       = 10
+resource "aws_cloudwatch_event_target" "to_stepfn" {
+  rule           = module.track_played_to_stepfn.rule_name
+  event_bus_name = module.eventbridge_bus.name
+  arn            = module.analytics_state_machine.arn
+  role_arn       = module.iam.eventbridge_stepfn_role_arn
 }
