@@ -7,7 +7,7 @@ resource "aws_cloudwatch_event_target" "eventbridge_to_sqs" {
 }
 
 resource "aws_cloudwatch_event_target" "to_stepfn" {
-  rule           = module.track_played_to_stepfn.rule_name
+  rule           = module.rule_track_played_to_stepfn.rule_name
   event_bus_name = module.eventbridge_bus.name
   arn            = module.listening_analytics.state_machine_arn
   role_arn       = module.iam.eventbridge_stepfn_role_arn

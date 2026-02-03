@@ -6,7 +6,7 @@ module "eventbridge_bus" {
 module "rule_track_played_to_sqs" {
   source = "../../modules/eventbridge_rule"
 
-  bus_name  = module.eventbridge_bus.name
+  bus_name  = module.eventbridge_bus.bus_name
   rule_name = "spotify-dev-track-played-to-sqs"
 
   event_pattern = jsonencode({
@@ -19,7 +19,7 @@ module "rule_track_played_to_sqs" {
 module "rule_track_played_to_stepfn" {
   source = "../../modules/eventbridge_rule"
 
-  bus_name  = module.eventbridge_bus.name
+  bus_name  = module.eventbridge_bus.bus_name
   rule_name = "spotify-dev-track-played-to-stepfn"
 
   event_pattern = jsonencode({
