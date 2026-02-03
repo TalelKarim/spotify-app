@@ -8,6 +8,7 @@ resource "aws_cloudwatch_event_target" "eventbridge_to_sqs" {
 
 
 
+
 resource "aws_lambda_event_source_mapping" "sqs_to_event_lambda" {
   event_source_arn = module.listening_events_queue.queue_arn
   function_name    = module.event_lambdas["event_store_listening_event"].lambda_arn

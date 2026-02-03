@@ -8,9 +8,6 @@ locals {
       }
 
       sqs_link = true
-      sqs_queue_arns = [
-        module.listening_events_queue.queue_arn
-      ]
     }
 
     event_update_track_stats = {
@@ -49,5 +46,16 @@ module "event_lambdas" {
   environment_variables = each.value.env
 
   sqs_link       = each.value.sqs_link
-  sqs_queue_arns = each.value.sqs_queue_arns
+}
+
+
+resource "aws_lambda_event_source_mapping" "event_consumers" {
+  for_each = {
+    for k, v in local.event_lambdas :
+    k => v if v.sqs_link
+  }
+
+  event_source_arn = module.listening_events_queue.queue_arn
+  function_name    = module.event_lambdas[each.key].lambda_arn
+  batch_size       = 10
 }
