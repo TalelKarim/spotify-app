@@ -2,10 +2,11 @@ variable "bus_name" {
   type = string
 }
 
-variable "rule_name" {
+variable "event_pattern" {
   type = string
 }
 
-variable "event_pattern" {
+
+variable "rule_name" {
   type = string
 }
