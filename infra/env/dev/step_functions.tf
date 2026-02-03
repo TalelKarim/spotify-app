@@ -1,7 +1,7 @@
 module "listening_analytics" {
   source = "../../modules/step-functions"
 
-  name      = "spotify-dev-listening-analytics"
+  name     = "spotify-dev-listening-analytics"
   role_arn = module.iam.lambda_step_functions_role_arn
 
   definition = jsonencode({

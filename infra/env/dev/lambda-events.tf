@@ -45,7 +45,7 @@ module "event_lambdas" {
 
   environment_variables = each.value.env
 
-  sqs_link       = each.value.sqs_link
+  sqs_link = each.value.sqs_link
 }
 
 
