@@ -9,3 +9,5 @@ module "eventbridge" {
     detail-type = ["TrackPlayed"]
   })
 }
+
+
