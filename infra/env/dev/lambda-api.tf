@@ -49,7 +49,7 @@ module "api_lambdas" {
 resource "aws_lambda_permission" "play_track" {
   statement_id  = "AllowApiGatewayInvokePlayTrack"
   action        = "lambda:InvokeFunction"
-  function_name = module.api_lambdas["api_play_track"].lambda_name
+  function_name = module.api_lambdas["api_start_stream"].lambda_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${module.api_gateway.execution_arn}/*/POST/tracks/*/play"
 }
