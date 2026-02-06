@@ -46,10 +46,19 @@ module "api_lambdas" {
   environment_variables = each.value.env
 }
 
-resource "aws_lambda_permission" "play_track" {
-  statement_id  = "AllowApiGatewayInvokePlayTrack"
+
+resource "aws_lambda_permission" "api_permissions" {
+  for_each = {
+    get_track             = { lambda = "api_get_track", path = "GET/tracks/*" }
+    play_track            = { lambda = "api_start_stream", path = "POST/tracks/*/play" }
+    get_user              = { lambda = "api_get_user", path = "GET/users/*" }
+    post_listening_event  = { lambda = "api_post_listening_event", path = "POST/events/listening" }
+    search                = { lambda = "api_search", path = "GET/search" }
+  }
+
+  statement_id  = "AllowApiGatewayInvoke-${each.key}"
   action        = "lambda:InvokeFunction"
-  function_name = module.api_lambdas["api_start_stream"].lambda_name
+  function_name = module.api_lambdas[each.value.lambda].lambda_name
   principal     = "apigateway.amazonaws.com"
-  source_arn    = "${module.api_gateway.execution_arn}/*/POST/tracks/*/play"
+  source_arn    = "${module.api_gateway.execution_arn}/*/${each.value.path}"
 }
