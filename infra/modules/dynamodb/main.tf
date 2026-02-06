@@ -92,3 +92,36 @@ resource "aws_dynamodb_table" "listening_events" {
     kms_key_arn = var.kms_key_arn
   }
 }
+
+
+
+############################
+# Analytics table
+############################
+
+resource "aws_dynamodb_table" "analytics" {
+  name         = "${var.project_name}-analytics"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "PK"
+  range_key    = "SK"
+
+  attribute {
+    name = "PK"
+    type = "S"
+  }
+
+  attribute {
+    name = "SK"
+    type = "S"
+  }
+
+  server_side_encryption {
+    enabled     = true
+    kms_key_arn = var.kms_key_arn
+  }
+
+  tags = {
+    Project = var.project_name
+    Purpose = "Aggregated analytics and precomputed metrics"
+  }
+}
