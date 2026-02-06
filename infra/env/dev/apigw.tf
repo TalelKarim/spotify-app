@@ -30,7 +30,7 @@ resource "aws_api_gateway_method" "play_track" {
   rest_api_id   = module.api_gateway.id
   resource_id   = aws_api_gateway_resource.play.id
   http_method   = "POST"
-  authorization = "NONE" 
+  authorization = "NONE"
 }
 
 

@@ -49,11 +49,11 @@ module "api_lambdas" {
 
 resource "aws_lambda_permission" "api_permissions" {
   for_each = {
-    get_track             = { lambda = "api_get_track", path = "GET/tracks/*" }
-    play_track            = { lambda = "api_start_stream", path = "POST/tracks/*/play" }
-    get_user              = { lambda = "api_get_user", path = "GET/users/*" }
-    post_listening_event  = { lambda = "api_post_listening_event", path = "POST/events/listening" }
-    search                = { lambda = "api_search", path = "GET/search" }
+    get_track            = { lambda = "api_get_track", path = "GET/tracks/*" }
+    play_track           = { lambda = "api_start_stream", path = "POST/tracks/*/play" }
+    get_user             = { lambda = "api_get_user", path = "GET/users/*" }
+    post_listening_event = { lambda = "api_post_listening_event", path = "POST/events/listening" }
+    search               = { lambda = "api_search", path = "GET/search" }
   }
 
   statement_id  = "AllowApiGatewayInvoke-${each.key}"
