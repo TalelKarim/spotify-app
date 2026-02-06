@@ -13,3 +13,8 @@ output "lambda_step_functions_role_arn" {
 output "eventbridge_stepfn_role_arn" {
   value = aws_iam_role.eventbridge_stepfn.arn
 }
+
+
+output "step_functions_role_arn" {
+  value = aws_iam_role.step_functions.arn
+}

@@ -5,16 +5,23 @@ module "listening_analytics" {
   role_arn = module.iam.lambda_step_functions_role_arn
 
   definition = jsonencode({
-    StartAt = "StoreEvent"
+    StartAt = "UpdateTrackStats"
     States = {
-      StoreEvent = {
+      UpdateTrackStats = {
         Type     = "Task"
-        Resource = module.event_lambdas["event_store_listening_event"].lambda_arn
-        Next     = "UpdateStats"
+        Resource = module.orchestration_lambdas["orch_update_track_stats"].lambda_arn
+        Next     = "UpdateUserStats"
       }
-      UpdateStats = {
+
+      UpdateUserStats = {
         Type     = "Task"
-        Resource = module.event_lambdas["event_update_track_stats"].lambda_arn
+        Resource = module.orchestration_lambdas["orch_update_user_stats"].lambda_arn
+        Next     = "ComputeAnalytics"
+      }
+
+      ComputeAnalytics = {
+        Type     = "Task"
+        Resource = module.orchestration_lambdas["orch_compute_analytics"].lambda_arn
         End      = true
       }
     }

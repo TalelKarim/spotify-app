@@ -1,11 +1,17 @@
 locals {
   orchestration_lambdas = {
-    orchestrator_daily_analytics = {
+    orch_update_track_stats = {
       role = module.iam.lambda_step_functions_role_arn
       env  = {}
     }
 
-    orchestrator_recommendations = {
+    orch_update_user_stats = {
+      role = module.iam.lambda_step_functions_role_arn
+      env  = {}
+    }
+
+
+    orch_compute_analytics = {
       role = module.iam.lambda_step_functions_role_arn
       env  = {}
     }
