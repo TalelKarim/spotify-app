@@ -69,6 +69,66 @@ resource "aws_iam_policy" "lambda_logs" {
 }
 
 ############################
+# Dynamodb Policies 
+############################
+
+
+resource "aws_iam_policy" "lambda_api_dynamodb" {
+  name = "${var.project_name}-lambda-api-dynamodb"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "dynamodb:GetItem",
+        "dynamodb:Query",
+        "dynamodb:Scan",
+        "dynamodb:UpdateItem"
+      ]
+      Resource = var.dynamodb_table_arns.api
+    }]
+  })
+}
+
+
+resource "aws_iam_policy" "lambda_events_dynamodb" {
+  name = "${var.project_name}-lambda-events-dynamodb"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem"
+      ]
+      Resource = var.dynamodb_table_arns.events
+    }]
+  })
+}
+
+
+
+resource "aws_iam_policy" "lambda_orch_dynamodb" {
+  name = "${var.project_name}-lambda-orch-dynamodb"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "dynamodb:GetItem",
+        "dynamodb:Query",
+        "dynamodb:UpdateItem",
+        "dynamodb:PutItem"
+      ]
+      Resource = var.dynamodb_table_arns.orch
+    }]
+  })
+}
+
+############################
 # IAM Policy - X-Ray
 ############################
 
@@ -147,6 +207,7 @@ resource "aws_iam_role_policy_attachment" "events_logs" {
 }
 
 
+
 resource "aws_iam_role_policy_attachment" "sqs_access" {
   role       = aws_iam_role.lambda_events.name
   policy_arn = aws_iam_policy.lambda_sqs_consume.arn
@@ -185,4 +246,24 @@ resource "aws_iam_role_policy_attachment" "events_kms" {
 resource "aws_iam_role_policy_attachment" "steps_kms" {
   role       = aws_iam_role.lambda_step_functions.name
   policy_arn = aws_iam_policy.lambda_kms.arn
+}
+
+
+
+
+resource "aws_iam_role_policy_attachment" "api_dynamodb" {
+  role       = aws_iam_role.lambda_api.name
+  policy_arn = aws_iam_policy.lambda_api_dynamodb.arn
+}
+
+
+
+resource "aws_iam_role_policy_attachment" "events_dynamodb" {
+  role       = aws_iam_role.lambda_events.name
+  policy_arn = aws_iam_policy.lambda_events_dynamodb.arn
+}
+
+resource "aws_iam_role_policy_attachment" "orch_dynamodb" {
+  role       = aws_iam_role.lambda_step_functions.name
+  policy_arn = aws_iam_policy.lambda_orch_dynamodb.arn
 }
