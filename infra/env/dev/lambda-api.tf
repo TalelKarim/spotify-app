@@ -17,8 +17,9 @@ locals {
     api_start_stream = {
       role = module.iam.lambda_api_role_arn
       env = {
-        TRACKS_TABLE = module.dynamodb.tracks_table_name
-        USERS_TABLE  = module.dynamodb.users_table_name
+        TRACKS_TABLE   = module.dynamodb.tracks_table_name
+        USERS_TABLE    = module.dynamodb.users_table_name
+        EVENT_BUS_NAME = module.eventbridge_bus.bus_name
       }
     }
 
