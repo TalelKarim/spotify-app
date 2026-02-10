@@ -10,33 +10,36 @@ table = dynamodb.Table(TABLE_NAME)
 
 def main(event, context):
     """
-    Event attendu = Detail EventBridge
+    Event attendu = SQS → EventBridge
     """
 
-    # EventBridge enveloppe
-    detail = event.get("detail", {})
+    for record in event.get("Records", []):
+        # 1️⃣ Body SQS = string JSON
+        body = json.loads(record["body"])
 
-    track_id = detail["trackId"]
-    user_id = detail["userId"]
-    timestamp = detail["timestamp"]
+        # 2️⃣ EventBridge enveloppe
+        detail = body.get("detail", {})
 
-    pk = f"TRACK#{track_id}"
-    sk = f"TS#{timestamp}"
+        track_id = detail["trackId"]
+        user_id = detail["userId"]
+        timestamp = detail["timestamp"]
 
-    item = {
-        "PK": pk,
-        "SK": sk,
-        "userId": user_id,
-        "eventType": detail["eventType"],
-        "source": detail["source"],
-        "metadata": detail.get("metadata", {}),
-        "createdAt": datetime.utcnow().isoformat() + "Z"
-    }
+        pk = f"TRACK#{track_id}"
+        sk = f"TS#{timestamp}"
 
-    table.put_item(Item=item)
+        item = {
+            "PK": pk,
+            "SK": sk,
+            "userId": user_id,
+            "eventType": detail["eventType"],
+            "source": detail["source"],
+            "metadata": detail.get("metadata", {}),
+            "createdAt": datetime.utcnow().isoformat() + "Z"
+        }
+
+        table.put_item(Item=item)
 
     return {
         "status": "OK",
-        "pk": pk,
-        "sk": sk
+        "processed": len(event.get("Records", []))
     }
