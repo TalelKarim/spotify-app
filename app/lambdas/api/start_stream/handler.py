@@ -7,7 +7,7 @@ eventbridge = boto3.client("events")
 
 EVENT_BUS_NAME = os.environ.get("EVENT_BUS_NAME", "default")
 
-def handler(event, context):
+def main(event, context):
     # 1️⃣ Récupération des infos d’entrée
     track_id = event["pathParameters"]["trackId"]
 
