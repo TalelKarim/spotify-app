@@ -192,7 +192,7 @@ resource "aws_api_gateway_deployment" "this" {
 # Stage Dev api gw 
 resource "aws_api_gateway_stage" "dev" {
   stage_name    = "dev"
-  rest_api_id  = module.api_gateway.id
+  rest_api_id   = module.api_gateway.id
   deployment_id = aws_api_gateway_deployment.this.id
 
   xray_tracing_enabled = true

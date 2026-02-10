@@ -68,6 +68,34 @@ resource "aws_iam_policy" "lambda_logs" {
   })
 }
 
+
+
+
+############################
+# Put events to eventbridge policy
+############################
+
+
+
+resource "aws_iam_policy" "lambda_eventbridge_put" {
+  name = "${var.project_name}-lambda-eventbridge-put-policy"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "events:PutEvents"
+        ]
+        Resource = var.eventbridge_bus_arn
+      }
+    ]
+  })
+}
+
+
+
 ############################
 # Dynamodb Policies 
 ############################
@@ -196,6 +224,11 @@ resource "aws_iam_policy" "lambda_sqs_consume" {
 # Attach policies to roles
 ############################
 
+
+
+
+
+# cloudwatch logs 
 resource "aws_iam_role_policy_attachment" "api_logs" {
   role       = aws_iam_role.lambda_api.name
   policy_arn = aws_iam_policy.lambda_logs.arn
@@ -208,15 +241,24 @@ resource "aws_iam_role_policy_attachment" "events_logs" {
 
 
 
-resource "aws_iam_role_policy_attachment" "sqs_access" {
-  role       = aws_iam_role.lambda_events.name
-  policy_arn = aws_iam_policy.lambda_sqs_consume.arn
-}
 
 resource "aws_iam_role_policy_attachment" "steps_logs" {
   role       = aws_iam_role.lambda_step_functions.name
   policy_arn = aws_iam_policy.lambda_logs.arn
 }
+
+
+#sqs
+
+resource "aws_iam_role_policy_attachment" "sqs_access" {
+  role       = aws_iam_role.lambda_events.name
+  policy_arn = aws_iam_policy.lambda_sqs_consume.arn
+}
+
+
+
+
+# x ray 
 
 resource "aws_iam_role_policy_attachment" "api_xray" {
   role       = aws_iam_role.lambda_api.name
@@ -232,6 +274,10 @@ resource "aws_iam_role_policy_attachment" "steps_xray" {
   role       = aws_iam_role.lambda_step_functions.name
   policy_arn = aws_iam_policy.lambda_xray.arn
 }
+
+
+
+# chiffrement kms
 
 resource "aws_iam_role_policy_attachment" "api_kms" {
   role       = aws_iam_role.lambda_api.name
@@ -250,7 +296,7 @@ resource "aws_iam_role_policy_attachment" "steps_kms" {
 
 
 
-
+# dynamodb 
 resource "aws_iam_role_policy_attachment" "api_dynamodb" {
   role       = aws_iam_role.lambda_api.name
   policy_arn = aws_iam_policy.lambda_api_dynamodb.arn
@@ -266,4 +312,12 @@ resource "aws_iam_role_policy_attachment" "events_dynamodb" {
 resource "aws_iam_role_policy_attachment" "orch_dynamodb" {
   role       = aws_iam_role.lambda_step_functions.name
   policy_arn = aws_iam_policy.lambda_orch_dynamodb.arn
+}
+
+
+
+
+resource "aws_iam_role_policy_attachment" "api_eventbridge_put" {
+  role       = aws_iam_role.lambda_api.name
+  policy_arn = aws_iam_policy.lambda_eventbridge_put.arn
 }

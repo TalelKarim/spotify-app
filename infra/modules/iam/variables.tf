@@ -23,3 +23,10 @@ variable "dynamodb_table_arns" {
     orch   = list(string)
   })
 }
+
+
+variable "eventbridge_bus_arn" {
+  description = "ARN of the EventBridge bus"
+  type        = string
+}
+
