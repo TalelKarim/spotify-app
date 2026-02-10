@@ -156,3 +156,54 @@ resource "aws_api_gateway_integration" "post_listening_event" {
   type                    = "AWS_PROXY"
   uri                     = module.api_lambdas["api_post_listening_event"].invoke_arn
 }
+
+
+
+
+# Api Gateway Deployment
+resource "aws_api_gateway_deployment" "this" {
+  rest_api_id = module.api_gateway.id
+
+  # ⚠️ TRÈS IMPORTANT
+  depends_on = [
+    aws_api_gateway_integration.play_track,
+    aws_api_gateway_integration.get_track,
+    aws_api_gateway_integration.get_user,
+    aws_api_gateway_integration.search,
+    aws_api_gateway_integration.post_listening_event
+  ]
+
+  triggers = {
+    redeployment = sha1(jsonencode([
+      aws_api_gateway_resource.tracks.id,
+      aws_api_gateway_resource.users.id,
+      aws_api_gateway_resource.search.id,
+      aws_api_gateway_resource.events.id
+    ]))
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+
+
+# Stage 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
