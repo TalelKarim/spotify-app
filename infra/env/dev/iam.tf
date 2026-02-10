@@ -11,6 +11,7 @@ module "iam" {
   sqs_queue_arn             = module.listening_events_queue.queue_arn
   orchestration_lambda_arns = local.orchestration_lambda_arns
 
+  
   dynamodb_table_arns = {
     api = [
       module.dynamodb.tracks_table_arn,
@@ -28,4 +29,6 @@ module "iam" {
       module.dynamodb.analytics_table_arn
     ]
   }
+
+  eventbridge_bus_arn = module.eventbridge_bus.bus_arn
 }
