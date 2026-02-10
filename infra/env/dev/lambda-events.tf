@@ -41,7 +41,7 @@ module "event_lambdas" {
   function_name = "spotify-dev-${each.key}"
   role_arn      = each.value.role
   handler       = "handler.main"
-  package_path  = "../../../app/lambdas/${each.key}.zip"
+  package_path  = "../../../app/lambdas/dist/${each.key}.zip"
 
   environment_variables = each.value.env
 
