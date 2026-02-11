@@ -1,14 +1,34 @@
-import json
 import os
 import boto3
 from datetime import datetime
 
+dynamodb = boto3.resource("dynamodb")
+TABLE_NAME = os.environ["TRACKS_TABLE"]
+table = dynamodb.Table(TABLE_NAME)
 
+def main(event, context):
 
-def handler(event, context):
-    return {
-        "statusCode": 200,
-        "body": json.dumps({
-            "message": "Hello World !",
-        })
-    }
+    detail = event.get("detail", event)
+
+    track_id = detail["trackId"]
+    timestamp = detail["timestamp"]
+
+    pk = f"TRACK#{track_id}"
+    sk = "METADATA"
+
+    table.update_item(
+        Key={
+            "PK": pk,
+            "SK": sk
+        },
+        UpdateExpression="""
+            ADD plays :inc
+            SET lastPlayedAt = :ts
+        """,
+        ExpressionAttributeValues={
+            ":inc": 1,
+            ":ts": timestamp
+        }
+    )
+
+    return {"status": "track_stats_updated"}

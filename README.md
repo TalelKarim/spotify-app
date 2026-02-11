@@ -87,3 +87,90 @@ Recherche textuelle sur les tracks via un moteur d’indexation.
 UC-07 — Opérations techniques
 
 Ingestion de données audio, re-indexation, maintenance.
+
+
+
+
+
+# modele de donnée 
+
+
+
+
+🟢 TABLE: tracks
+
+
+🎵 1️⃣ Track Metadata
+
+
+PK = TRACK#{trackId}
+SK = METADATA
+
+Attributes
+
+{
+  "PK": "TRACK#track-123",
+  "SK": "METADATA",
+  "title": "My Song",
+  "artist": "Artist Name",
+  "genre": "Pop",
+  "duration": 210,
+  "createdAt": "...",
+  "plays": 0,
+  "lastPlayedAt": null
+}
+
+
+🟢 TABLE: users
+
+👤 1️⃣ User Metadata
+
+PK = USER#{userId}
+SK = METADATA
+
+
+
+Attributes 
+
+{
+  "PK": "USER#user-456",
+  "SK": "METADATA",
+  "email": "...",
+  "createdAt": "...",
+  "totalPlays": 0,
+  "lastPlayedTrack": null
+}
+
+
+
+
+🟢 TABLE: listening_events
+
+🎧 1️⃣ Event brut (historique)
+PK = TRACK#{trackId}
+SK = TS#{timestamp}
+
+
+
+{
+  "PK": "TRACK#track-123",
+  "SK": "TS#2026-02-10T18:22:00Z",
+  "userId": "user-456",
+  "eventType": "TrackPlayed",
+  "source": "api",
+  "metadata": { ... },
+  "createdAt": "..."
+}
+
+
+
+📅 2️⃣ Analytics global journalier
+PK = ANALYTICS#GLOBAL
+SK = DATE#2026-02-10
+
+
+{
+  "PK": "ANALYTICS#GLOBAL",
+  "SK": "DATE#2026-02-10",
+  "dailyPlays": 1532
+}
