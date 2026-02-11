@@ -15,3 +15,8 @@ output "lambda_step_functions_role_arn" {
 output "kms_key_arn" {
   value = module.kms.kms_key_arn
 }
+
+
+output "apigw_invoke_url_dev" {
+  value = aws_api_gateway_stage.dev.invoke_url
+}
