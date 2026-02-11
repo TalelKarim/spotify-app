@@ -7,6 +7,7 @@ module "listening_analytics" {
   definition = jsonencode({
     StartAt = "UpdateTrackStats"
     States = {
+
       UpdateTrackStats = {
         Type     = "Task"
         Resource = module.orchestration_lambdas["orch_update_track_stats"].lambda_arn
