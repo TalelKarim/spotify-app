@@ -2,18 +2,25 @@ locals {
   orchestration_lambdas = {
     orch_update_track_stats = {
       role = module.iam.lambda_step_functions_role_arn
-      env  = {}
+      env = {
+
+        TRACKS_TABLE = module.dynamodb.tracks_table_name
+      }
     }
 
     orch_update_user_stats = {
       role = module.iam.lambda_step_functions_role_arn
-      env  = {}
+      env = {
+        USERS_TABLE = module.dynamodb.users_table_name
+      }
     }
 
 
     orch_compute_analytics = {
       role = module.iam.lambda_step_functions_role_arn
-      env  = {}
+      env = {
+        LISTENING_EVENTS_TABLE = module.dynamodb.listening_events_table_name
+      }
     }
   }
 }
