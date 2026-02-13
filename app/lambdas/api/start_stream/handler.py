@@ -32,7 +32,7 @@ def main(event, context):
 
     headers = {k.lower(): v for k, v in (event.get("headers") or {}).items()}
 
-    user_id = headers.get("x-user-id")
+    user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
     device = headers.get("x-device")
     country = headers.get("x-country")
 

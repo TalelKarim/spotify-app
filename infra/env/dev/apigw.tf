@@ -33,7 +33,8 @@ resource "aws_api_gateway_method" "post_track" {
   rest_api_id   = module.api_gateway.id
   resource_id   = aws_api_gateway_resource.tracks.id
   http_method   = "POST"
-  authorization = "NONE"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = module.api_gateway.authorizer_id
 }
 
 resource "aws_api_gateway_integration" "post_track" {
@@ -160,37 +161,37 @@ resource "aws_api_gateway_integration" "get_analytics" {
 #users
 
 
-# GET /users/{userId}
+# # GET /users/{userId}
 
 
-resource "aws_api_gateway_resource" "users" {
-  rest_api_id = module.api_gateway.id
-  parent_id   = module.api_gateway.root_resource_id
-  path_part   = "users"
-}
+# resource "aws_api_gateway_resource" "users" {
+#   rest_api_id = module.api_gateway.id
+#   parent_id   = module.api_gateway.root_resource_id
+#   path_part   = "users"
+# }
 
-resource "aws_api_gateway_resource" "user_id" {
-  rest_api_id = module.api_gateway.id
-  parent_id   = aws_api_gateway_resource.users.id
-  path_part   = "{userId}"
-}
+# resource "aws_api_gateway_resource" "user_id" {
+#   rest_api_id = module.api_gateway.id
+#   parent_id   = aws_api_gateway_resource.users.id
+#   path_part   = "{userId}"
+# }
 
 
-resource "aws_api_gateway_method" "get_user" {
-  rest_api_id   = module.api_gateway.id
-  resource_id   = aws_api_gateway_resource.user_id.id
-  http_method   = "GET"
-  authorization = "NONE"
-}
+# resource "aws_api_gateway_method" "get_user" {
+#   rest_api_id   = module.api_gateway.id
+#   resource_id   = aws_api_gateway_resource.user_id.id
+#   http_method   = "GET"
+#   authorization = "NONE"
+# }
 
-resource "aws_api_gateway_integration" "get_user" {
-  rest_api_id             = module.api_gateway.id
-  resource_id             = aws_api_gateway_resource.user_id.id
-  http_method             = aws_api_gateway_method.get_user.http_method
-  integration_http_method = "POST"
-  type                    = "AWS_PROXY"
-  uri                     = module.api_lambdas["api_get_user"].invoke_arn
-}
+# resource "aws_api_gateway_integration" "get_user" {
+#   rest_api_id             = module.api_gateway.id
+#   resource_id             = aws_api_gateway_resource.user_id.id
+#   http_method             = aws_api_gateway_method.get_user.http_method
+#   integration_http_method = "POST"
+#   type                    = "AWS_PROXY"
+#   uri                     = module.api_lambdas["api_get_user"].invoke_arn
+# }
 
 
 
@@ -222,35 +223,35 @@ resource "aws_api_gateway_integration" "search" {
 
 # POST /events/listening
 
-resource "aws_api_gateway_resource" "events" {
-  rest_api_id = module.api_gateway.id
-  parent_id   = module.api_gateway.root_resource_id
-  path_part   = "events"
-}
+# resource "aws_api_gateway_resource" "events" {
+#   rest_api_id = module.api_gateway.id
+#   parent_id   = module.api_gateway.root_resource_id
+#   path_part   = "events"
+# }
 
-resource "aws_api_gateway_resource" "listening" {
-  rest_api_id = module.api_gateway.id
-  parent_id   = aws_api_gateway_resource.events.id
-  path_part   = "listening"
-}
+# resource "aws_api_gateway_resource" "listening" {
+#   rest_api_id = module.api_gateway.id
+#   parent_id   = aws_api_gateway_resource.events.id
+#   path_part   = "listening"
+# }
 
-resource "aws_api_gateway_method" "post_listening_event" {
-  rest_api_id   = module.api_gateway.id
-  resource_id   = aws_api_gateway_resource.listening.id
-  http_method   = "POST"
-  authorization = "COGNITO_USER_POOLS"
-  authorizer_id = module.api_gateway.authorizer_id
-}
+# resource "aws_api_gateway_method" "post_listening_event" {
+#   rest_api_id   = module.api_gateway.id
+#   resource_id   = aws_api_gateway_resource.listening.id
+#   http_method   = "POST"
+#   authorization = "COGNITO_USER_POOLS"
+#   authorizer_id = module.api_gateway.authorizer_id
+# }
 
 
-resource "aws_api_gateway_integration" "post_listening_event" {
-  rest_api_id             = module.api_gateway.id
-  resource_id             = aws_api_gateway_resource.listening.id
-  http_method             = aws_api_gateway_method.post_listening_event.http_method
-  integration_http_method = "POST"
-  type                    = "AWS_PROXY"
-  uri                     = module.api_lambdas["api_post_listening_event"].invoke_arn
-}
+# resource "aws_api_gateway_integration" "post_listening_event" {
+#   rest_api_id             = module.api_gateway.id
+#   resource_id             = aws_api_gateway_resource.listening.id
+#   http_method             = aws_api_gateway_method.post_listening_event.http_method
+#   integration_http_method = "POST"
+#   type                    = "AWS_PROXY"
+#   uri                     = module.api_lambdas["api_post_listening_event"].invoke_arn
+# }
 
 
 
