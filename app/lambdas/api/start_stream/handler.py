@@ -11,10 +11,19 @@ def main(event, context):
     # 1️⃣ Récupération des infos d’entrée
     track_id = event["pathParameters"]["trackId"]
 
-    headers = event.get("headers") or {}
-    user_id = headers.get("X-User-Id", "anonymous")
-    device = headers.get("X-Device", "unknown")
-    country = headers.get("X-Country", "unknown")
+    headers = {k.lower(): v for k, v in (event.get("headers") or {}).items()}
+
+    user_id = headers.get("x-user-id")
+    device = headers.get("x-device")
+    country = headers.get("x-country")
+
+    if not user_id:
+    return {
+        "statusCode": 400,
+        "body": json.dumps({"error": "Missing X-User-Id header"})
+    }
+
+
 
     # 2️⃣ Construction de l’événement métier (CONTRAT)
     listening_event = {
