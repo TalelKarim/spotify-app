@@ -20,3 +20,8 @@ output "kms_key_arn" {
 output "apigw_invoke_url_dev" {
   value = aws_api_gateway_stage.dev.invoke_url
 }
+
+
+output "COGNITO_USER_POOLS" {
+  value = module.cognito.user_pool_arn
+}
