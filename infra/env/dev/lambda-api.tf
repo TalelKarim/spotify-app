@@ -38,7 +38,9 @@ locals {
 
     api_search = {
       role = module.iam.lambda_api_role_arn
-      env  = {}
+      env  = {
+        TRACKS_TABLE = module.dynamodb.tracks_table_name
+      }
     }
   }
 }
