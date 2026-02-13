@@ -49,6 +49,12 @@ locals {
         TRACKS_TABLE = module.dynamodb.tracks_table_name
       }
     }
+
+    api_get_me = {
+      role = module.iam.lambda_api_role_arn
+      env  = {}
+}
+
   }
 }
 

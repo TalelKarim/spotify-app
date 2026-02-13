@@ -1,6 +1,7 @@
 module "api_gateway" {
   source = "../../modules/api-gateway"
   name   = "spotify-dev-api"
+  cognito_user_pool_arn = module.cognito.user_pool_arn
 }
 
 
@@ -266,9 +267,6 @@ resource "aws_api_gateway_stage" "dev" {
     Project     = "spotify-app"
   }
 }
-
-
-
 
 
 
