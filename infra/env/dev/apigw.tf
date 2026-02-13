@@ -95,7 +95,7 @@ resource "aws_api_gateway_integration" "get_analytics" {
   http_method             = aws_api_gateway_method.get_analytics.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = module.api_get_analytics.invoke_arn
+  uri                     = module.api_lambdas["api_get_analytics"].invoke_arn
 }
 
 
