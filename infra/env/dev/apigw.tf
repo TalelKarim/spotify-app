@@ -267,7 +267,6 @@ resource "aws_api_gateway_deployment" "this" {
     aws_api_gateway_integration.get_analytics,
     aws_api_gateway_integration.get_track,
     aws_api_gateway_integration.post_track,
-    aws_api_gateway_integration.get_user,
     aws_api_gateway_integration.search,
     aws_api_gateway_integration.post_listening_event
   ]
@@ -275,10 +274,8 @@ resource "aws_api_gateway_deployment" "this" {
   triggers = {
     redeployment = sha1(jsonencode([
       aws_api_gateway_resource.tracks.id,
-      aws_api_gateway_resource.users.id,
       aws_api_gateway_resource.me.id,
       aws_api_gateway_resource.search.id,
-      aws_api_gateway_resource.events.id,
       aws_api_gateway_resource.analytics.id
     ]))
   }
