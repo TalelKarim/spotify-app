@@ -18,10 +18,10 @@ def main(event, context):
     country = headers.get("x-country")
 
     if not user_id:
-    return {
-        "statusCode": 400,
-        "body": json.dumps({"error": "Missing X-User-Id header"})
-    }
+            return {
+                "statusCode": 400,
+                "body": json.dumps({"error": "Missing X-User-Id header"})
+            }
 
 
 
