@@ -28,7 +28,9 @@ def main(event, context):
         ExpressionAttributeValues={
             ":inc": 1,
             ":ts": timestamp
-        }
+        },
+        ConditionExpression="attribute_exists(PK)"
+
     )
 
     return {"status": "track_stats_updated"}
