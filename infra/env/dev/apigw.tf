@@ -25,6 +25,27 @@ resource "aws_api_gateway_resource" "play" {
   path_part   = "play"
 }
 
+
+# POST /tracks
+
+resource "aws_api_gateway_method" "post_track" {
+  rest_api_id   = module.api_gateway.id
+  resource_id   = aws_api_gateway_resource.tracks.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "post_track" {
+  rest_api_id             = module.api_gateway.id
+  resource_id             = aws_api_gateway_resource.tracks.id
+  http_method             = aws_api_gateway_method.post_track.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = module.api_lambdas["api_create_track"].invoke_arn
+}
+
+
+
 # POST /tracks/{trackId}/play
 resource "aws_api_gateway_method" "play_track" {
   rest_api_id   = module.api_gateway.id

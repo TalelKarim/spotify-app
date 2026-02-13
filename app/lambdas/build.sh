@@ -33,6 +33,8 @@ zip_lambda() {
 
 LAMBDAS="
 api_get_track:api/get_track
+api_create_track:api/create_track
+
 api_get_analytics:api/get_analytics
 api_get_user:api/get_user
 api_start_stream:api/start_stream
