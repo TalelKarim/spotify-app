@@ -14,20 +14,26 @@ def main(event, context):
 
     pk = f"USER#{user_id}"
     sk = "METADATA"
+    try:
+        table.update_item(
+            Key={
+                "PK": pk,
+                "SK": sk
+            },
+            UpdateExpression="""
+                ADD totalPlays :inc
+                SET lastPlayedTrack = :track
+            """,
+            ExpressionAttributeValues={
+                ":inc": 1,
+                ":track": track_id
+            },
+            ConditionExpression="attribute_exists(PK)"
 
-    table.update_item(
-        Key={
-            "PK": pk,
-            "SK": sk
-        },
-        UpdateExpression="""
-            ADD totalPlays :inc
-            SET lastPlayedTrack = :track
-        """,
-        ExpressionAttributeValues={
-            ":inc": 1,
-            ":track": track_id
-        }
-    )
+        )
 
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
+            raise Exception("User does not exist")
+        raise    
     return {"status": "user_stats_updated"}
