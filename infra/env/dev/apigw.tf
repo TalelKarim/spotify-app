@@ -230,6 +230,7 @@ resource "aws_api_gateway_deployment" "this" {
     aws_api_gateway_integration.play_track,
     aws_api_gateway_integration.get_analytics,
     aws_api_gateway_integration.get_track,
+    aws_api_gateway_integration.post_track,
     aws_api_gateway_integration.get_user,
     aws_api_gateway_integration.search,
     aws_api_gateway_integration.post_listening_event
