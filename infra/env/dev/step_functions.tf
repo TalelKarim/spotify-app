@@ -8,24 +8,24 @@ module "listening_analytics" {
     StartAt = "UpdateTrackStats"
     States = {
       UpdateTrackStats = {
-        Type     = "Task"
-        Resource = module.orchestration_lambdas["orch_update_track_stats"].lambda_arn
+        Type       = "Task"
+        Resource   = module.orchestration_lambdas["orch_update_track_stats"].lambda_arn
         ResultPath = "$.trackStatsResult"
-        Next     = "UpdateUserStats"
+        Next       = "UpdateUserStats"
       }
 
       UpdateUserStats = {
-        Type     = "Task"
-        Resource = module.orchestration_lambdas["orch_update_user_stats"].lambda_arn
+        Type       = "Task"
+        Resource   = module.orchestration_lambdas["orch_update_user_stats"].lambda_arn
         ResultPath = "$.userStatsResult"
-        Next     = "ComputeAnalytics"
+        Next       = "ComputeAnalytics"
       }
 
       ComputeAnalytics = {
-        Type     = "Task"
-        Resource = module.orchestration_lambdas["orch_compute_analytics"].lambda_arn
+        Type       = "Task"
+        Resource   = module.orchestration_lambdas["orch_compute_analytics"].lambda_arn
         ResultPath = "$.analyticsResult"
-        End      = true
+        End        = true
       }
     }
   })
