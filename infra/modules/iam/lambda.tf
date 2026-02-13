@@ -112,6 +112,7 @@ resource "aws_iam_policy" "lambda_api_dynamodb" {
         "dynamodb:GetItem",
         "dynamodb:Query",
         "dynamodb:Scan",
+        "dynamodb:PutItem",
         "dynamodb:UpdateItem"
       ]
       Resource = var.dynamodb_table_arns.api
