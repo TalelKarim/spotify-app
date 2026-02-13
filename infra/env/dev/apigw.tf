@@ -207,6 +207,7 @@ resource "aws_api_gateway_deployment" "this" {
   # ⚠️ TRÈS IMPORTANT
   depends_on = [
     aws_api_gateway_integration.play_track,
+    aws_api_gateway_integration.get_analytics,
     aws_api_gateway_integration.get_track,
     aws_api_gateway_integration.get_user,
     aws_api_gateway_integration.search,
@@ -218,7 +219,8 @@ resource "aws_api_gateway_deployment" "this" {
       aws_api_gateway_resource.tracks.id,
       aws_api_gateway_resource.users.id,
       aws_api_gateway_resource.search.id,
-      aws_api_gateway_resource.events.id
+      aws_api_gateway_resource.events.id,
+      aws_api_gateway_resource.analytics.id
     ]))
   }
 
