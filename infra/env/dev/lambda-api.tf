@@ -37,7 +37,7 @@ locals {
 
     api_get_analytics = {
       role = module.iam.lambda_api_role_arn
-      env  = {
+      env = {
         ANALYTICS_TABLE = module.dynamodb.analytics_table_name
       }
 
@@ -45,7 +45,7 @@ locals {
 
     api_search = {
       role = module.iam.lambda_api_role_arn
-      env  = {
+      env = {
         TRACKS_TABLE = module.dynamodb.tracks_table_name
       }
     }
@@ -68,8 +68,8 @@ module "api_lambdas" {
 resource "aws_lambda_permission" "api_permissions" {
   for_each = {
     get_track            = { lambda = "api_get_track", path = "GET/tracks/*" }
-    get_analytics          = { lambda = "api_get_analytics", path = "GET/analytics/global" }
-    post_track            = { lambda = "api_create_track", path = "POST/tracks" }
+    get_analytics        = { lambda = "api_get_analytics", path = "GET/analytics/global" }
+    post_track           = { lambda = "api_create_track", path = "POST/tracks" }
     play_track           = { lambda = "api_start_stream", path = "POST/tracks/*/play" }
     get_user             = { lambda = "api_get_user", path = "GET/users/*" }
     post_listening_event = { lambda = "api_post_listening_event", path = "POST/events/listening" }

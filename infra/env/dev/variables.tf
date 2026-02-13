@@ -8,6 +8,10 @@ variable "aws_region" {
   type        = string
 }
 
+variable "env" {
+  type = string
+  default = "dev"
+}
 
 variable "sqs_link" {
   type    = bool
