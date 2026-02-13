@@ -87,6 +87,37 @@ resource "aws_api_gateway_integration" "get_track" {
 }
 
 
+
+
+# me 
+
+resource "aws_api_gateway_resource" "me" {
+  rest_api_id = module.api_gateway.id
+  parent_id   = module.api_gateway.root_resource_id
+  path_part   = "me"
+}
+
+# GET /me
+resource "aws_api_gateway_method" "get_me" {
+  rest_api_id   = module.api_gateway.id
+  resource_id   = aws_api_gateway_resource.me.id
+  http_method   = "GET"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = module.api_gateway.authorizer_id
+}
+
+
+resource "aws_api_gateway_integration" "get_me" {
+  rest_api_id             = module.api_gateway.id
+  resource_id             = aws_api_gateway_resource.me.id
+  http_method             = aws_api_gateway_method.get_me.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = module.api_lambdas["api_get_me"].invoke_arn
+}
+
+
+
 #analytics
 
 resource "aws_api_gateway_resource" "analytics" {
@@ -229,6 +260,7 @@ resource "aws_api_gateway_deployment" "this" {
   # ⚠️ TRÈS IMPORTANT
   depends_on = [
     aws_api_gateway_integration.play_track,
+    aws_api_gateway_integration.get_me,
     aws_api_gateway_integration.get_analytics,
     aws_api_gateway_integration.get_track,
     aws_api_gateway_integration.post_track,
@@ -241,6 +273,7 @@ resource "aws_api_gateway_deployment" "this" {
     redeployment = sha1(jsonencode([
       aws_api_gateway_resource.tracks.id,
       aws_api_gateway_resource.users.id,
+      aws_api_gateway_resource.me.id,
       aws_api_gateway_resource.search.id,
       aws_api_gateway_resource.events.id,
       aws_api_gateway_resource.analytics.id
