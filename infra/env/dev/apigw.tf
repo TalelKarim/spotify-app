@@ -268,7 +268,6 @@ resource "aws_api_gateway_deployment" "this" {
     aws_api_gateway_integration.get_track,
     aws_api_gateway_integration.post_track,
     aws_api_gateway_integration.search,
-    aws_api_gateway_integration.post_listening_event
   ]
 
   triggers = {
