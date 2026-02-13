@@ -65,6 +65,46 @@ resource "aws_api_gateway_integration" "get_track" {
 }
 
 
+#analytics
+
+resource "aws_api_gateway_resource" "analytics" {
+  rest_api_id = module.api_gateway.id
+  parent_id   = module.api_gateway.root_resource_id
+  path_part   = "analytics"
+}
+
+resource "aws_api_gateway_resource" "analytics_global" {
+  rest_api_id = module.api_gateway.id
+  parent_id   = aws_api_gateway_resource.analytics.id
+  path_part   = "global"
+}
+
+
+resource "aws_api_gateway_method" "get_analytics" {
+  rest_api_id   = module.api_gateway.id
+  resource_id   = aws_api_gateway_resource.analytics_global.id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+
+
+
+resource "aws_api_gateway_integration" "get_analytics" {
+  rest_api_id             = module.api_gateway.id
+  resource_id             = aws_api_gateway_resource.analytics_global.id
+  http_method             = aws_api_gateway_method.get_analytics.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = module.api_get_analytics.invoke_arn
+}
+
+
+
+
+
+
+#users
+
 
 # GET /users/{userId}
 
