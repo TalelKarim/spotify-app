@@ -52,8 +52,9 @@ resource "aws_api_gateway_method" "play_track" {
   rest_api_id   = module.api_gateway.id
   resource_id   = aws_api_gateway_resource.play.id
   http_method   = "POST"
-  authorization = "NONE"
-}
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = module.api_gateway.authorizer_id
+  }
 
 
 resource "aws_api_gateway_integration" "play_track" {
@@ -237,7 +238,8 @@ resource "aws_api_gateway_method" "post_listening_event" {
   rest_api_id   = module.api_gateway.id
   resource_id   = aws_api_gateway_resource.listening.id
   http_method   = "POST"
-  authorization = "NONE"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = module.api_gateway.authorizer_id
 }
 
 
