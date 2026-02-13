@@ -1,10 +1,21 @@
 import os
 import boto3
 import json
+from decimal import Decimal
 
 dynamodb = boto3.resource("dynamodb")
 TABLE_NAME = os.environ["TRACKS_TABLE"]
 table = dynamodb.Table(TABLE_NAME)
+
+
+def decimal_to_native(obj):
+    if isinstance(obj, Decimal):
+        if obj % 1 == 0:
+            return int(obj)
+        else:
+            return float(obj)
+    return obj
+
 
 def main(event, context):
 
@@ -28,11 +39,13 @@ def main(event, context):
             "body": json.dumps({"error": "Track not found"})
         }
 
+    plays = decimal_to_native(item.get("plays", 0))
+
     return {
         "statusCode": 200,
         "body": json.dumps({
             "trackId": track_id,
-            "plays": item.get("plays", 0),
+            "plays": plays,
             "lastPlayedAt": item.get("lastPlayedAt")
         })
     }
