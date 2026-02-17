@@ -318,6 +318,7 @@ resource "aws_api_gateway_deployment" "this" {
     aws_api_gateway_integration.get_tracks,
     aws_api_gateway_integration.post_track,
     aws_api_gateway_integration.search,
+    aws_api_gateway_integration.health_get
   ]
 
   triggers = {
@@ -325,7 +326,8 @@ resource "aws_api_gateway_deployment" "this" {
       aws_api_gateway_resource.tracks.id,
       aws_api_gateway_resource.me.id,
       aws_api_gateway_resource.search.id,
-      aws_api_gateway_resource.analytics.id
+      aws_api_gateway_resource.analytics.id,
+      aws_api_gateway_resource.health.id
     ]))
   }
 
