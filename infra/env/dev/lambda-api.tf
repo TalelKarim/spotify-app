@@ -64,15 +64,15 @@ locals {
     api_get_me = {
       role = module.iam.lambda_api_role_arn
       env  = {}
+    }
 
 
-      api_healthcheck = {
+    api_healthcheck = {
         role = module.iam.lambda_api_role_arn
         env = {
         }
       }
-    }
-
+      
   }
 }
 
