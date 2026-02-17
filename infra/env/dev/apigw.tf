@@ -1,6 +1,6 @@
 module "api_gateway" {
-  source = "../../modules/api-gateway"
-  name   = "spotify-dev-api"
+  source                = "../../modules/api-gateway"
+  name                  = "spotify-dev-api"
   cognito_user_pool_arn = module.cognito.user_pool_arn
 }
 
@@ -55,7 +55,7 @@ resource "aws_api_gateway_method" "play_track" {
   http_method   = "POST"
   authorization = "COGNITO_USER_POOLS"
   authorizer_id = module.api_gateway.authorizer_id
-  }
+}
 
 
 resource "aws_api_gateway_integration" "play_track" {

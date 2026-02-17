@@ -66,12 +66,12 @@ locals {
       env  = {}
 
 
-    api_health_check = {
-      role = module.iam.lambda_api_role_arn
-      env = {
+      api_healthcheck = {
+        role = module.iam.lambda_api_role_arn
+        env = {
+        }
       }
-    }  
-}
+    }
 
   }
 }
@@ -91,13 +91,13 @@ module "api_lambdas" {
 
 resource "aws_lambda_permission" "api_permissions" {
   for_each = {
-    get_track            = { lambda = "api_get_track", path = "GET/tracks/*" }
-    get_tracks            = { lambda = "api_get_tracks", path = "GET/tracks*" }
-    health            = { lambda = "api_health_check", path = "GET/health" }
-    
+    get_track  = { lambda = "api_get_track", path = "GET/tracks/*" }
+    get_tracks = { lambda = "api_get_tracks", path = "GET/tracks*" }
+    health     = { lambda = "api_healthcheck", path = "GET/health" }
+
     get_analytics        = { lambda = "api_get_analytics", path = "GET/analytics/global" }
     post_track           = { lambda = "api_create_track", path = "POST/tracks" }
-    get_me           = { lambda = "api_get_me", path = "GET/me" }
+    get_me               = { lambda = "api_get_me", path = "GET/me" }
     play_track           = { lambda = "api_start_stream", path = "POST/tracks/*/play" }
     get_user             = { lambda = "api_get_user", path = "GET/users/*" }
     post_listening_event = { lambda = "api_post_listening_event", path = "POST/events/listening" }
