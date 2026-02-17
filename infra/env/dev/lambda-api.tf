@@ -71,6 +71,13 @@ locals {
       env  = {}
     }
 
+    api_get_myhistory = {
+      role = module.iam.lambda_api_role_arn
+      env  = {
+        LISTENING_EVENTS_TABLE = module.dynamodb.listening_events_table_name
+      }
+    }
+
 
     api_healthcheck = {
         role = module.iam.lambda_api_role_arn
@@ -101,6 +108,7 @@ resource "aws_lambda_permission" "api_permissions" {
     get_track_stats  = { lambda = "api_get_track_stats", path = "GET/tracks/*" }
     health     = { lambda = "api_healthcheck", path = "GET/health" }
 
+    get_my_history  = { lambda = "api_get_myhistory", path = "GET/me/listening/history" }
     get_analytics        = { lambda = "api_get_analytics", path = "GET/analytics/global" }
     post_track           = { lambda = "api_create_track", path = "POST/tracks" }
     get_me               = { lambda = "api_get_me", path = "GET/me" }

@@ -36,8 +36,8 @@ resource "aws_api_gateway_method" "post_track" {
   rest_api_id   = module.api_gateway.id
   resource_id   = aws_api_gateway_resource.tracks.id
   http_method   = "POST"
-  authorization = "NONE"
-  # authorizer_id = module.api_gateway.authorizer_id
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = module.api_gateway.authorizer_id
 }
 
 resource "aws_api_gateway_integration" "post_track" {
@@ -56,9 +56,8 @@ resource "aws_api_gateway_method" "play_track" {
   rest_api_id   = module.api_gateway.id
   resource_id   = aws_api_gateway_resource.play.id
   http_method   = "POST"
-  # authorization = "COGNITO_USER_POOLS"
-  authorization = "NONE"
-  # authorizer_id = module.api_gateway.authorizer_id
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = module.api_gateway.authorizer_id
 }
 
 
@@ -103,8 +102,8 @@ resource "aws_api_gateway_method" "get_track_stats" {
   rest_api_id   = module.api_gateway.id
   resource_id   = aws_api_gateway_resource.track_stats.id
   http_method   = "GET"
-  authorization = "NONE"  # comme tu le veux
-  # authorizer_id = module.api_gateway.cognito_authorizer_id
+  authorization = "COGNITO_USER_POOLS"  
+  authorizer_id = module.api_gateway.cognito_authorizer_id
 }
 
 resource "aws_api_gateway_integration" "get_track_stats" {
@@ -149,14 +148,50 @@ resource "aws_api_gateway_resource" "me" {
   path_part   = "me"
 }
 
+
+
+
 # GET /me
 resource "aws_api_gateway_method" "get_me" {
   rest_api_id   = module.api_gateway.id
   resource_id   = aws_api_gateway_resource.me.id
   http_method   = "GET"
-  authorization = "NONE"
-  # authorizer_id = module.api_gateway.authorizer_id
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = module.api_gateway.authorizer_id
 }
+
+#GET /me/listening/history
+
+resource "aws_api_gateway_resource" "me_listening" {
+  rest_api_id = module.api_gateway.id
+  parent_id   = aws_api_gateway_resource.me.id
+  path_part   = "listening"
+}
+
+resource "aws_api_gateway_resource" "me_listening_history" {
+  rest_api_id = module.api_gateway.id
+  parent_id   = aws_api_gateway_resource.me_listening.id
+  path_part   = "history"
+}
+
+resource "aws_api_gateway_method" "get_me_listening_history" {
+  rest_api_id   = module.api_gateway.id
+  resource_id   = aws_api_gateway_resource.me_listening_history.id
+  http_method   = "GET"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = module.api_gateway.cognito_authorizer_id
+}
+
+resource "aws_api_gateway_integration" "get_me_listening_history" {
+  rest_api_id             = module.api_gateway.id
+  resource_id             = aws_api_gateway_resource.me_listening_history.id
+  http_method             = aws_api_gateway_method.get_me_listening_history.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = module.api_lambdas["api_get_myhistory"].invoke_arn
+}
+
+
 
 
 resource "aws_api_gateway_integration" "get_me" {
@@ -312,7 +347,8 @@ resource "aws_api_gateway_deployment" "this" {
     aws_api_gateway_integration.get_tracks,
     aws_api_gateway_integration.post_track,
     aws_api_gateway_integration.search,
-    aws_api_gateway_integration.health_get
+    aws_api_gateway_integration.health_get,
+    aws_api_gaaws_api_gateway_integration.get_me_listening_history
   ]
 
   triggers = {
@@ -322,6 +358,7 @@ resource "aws_api_gateway_deployment" "this" {
       aws_api_gateway_resource.search.id,
       aws_api_gateway_resource.analytics.id,
       aws_api_gateway_resource.health.id
+
     ]))
   }
 
