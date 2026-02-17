@@ -1,3 +1,5 @@
+# api_get_track.py
+
 import os
 import boto3
 import json
@@ -14,11 +16,14 @@ def decimal_to_native(obj):
             return int(obj)
         else:
             return float(obj)
+    if isinstance(obj, list):
+        return [decimal_to_native(x) for x in obj]
+    if isinstance(obj, dict):
+        return {k: decimal_to_native(v) for k, v in obj.items()}
     return obj
 
 
 def main(event, context):
-
     track_id = event["pathParameters"]["trackId"]
 
     pk = f"TRACK#{track_id}"
@@ -39,13 +44,15 @@ def main(event, context):
             "body": json.dumps({"error": "Track not found"})
         }
 
-    plays = decimal_to_native(item.get("plays", 0))
+    # On nettoie l'item
+    cleaned = {k: v for k, v in item.items() if k not in ("PK", "SK")}
+    cleaned = decimal_to_native(cleaned)
+    cleaned["trackId"] = track_id
 
     return {
         "statusCode": 200,
-        "body": json.dumps({
-            "trackId": track_id,
-            "plays": plays,
-            "lastPlayedAt": item.get("lastPlayedAt")
-        })
+        "body": json.dumps(cleaned),
+        "headers": {
+            "Content-Type": "application/json",
+        },
     }
