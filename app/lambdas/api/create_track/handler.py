@@ -22,7 +22,7 @@ def main(event, context):
     track_id = body.get("trackId")
     title = body.get("title")
     artist = body.get("artist")
-
+    audios3Key = body.get("audioS3Key")
     if not track_id or not title:
         return {
             "statusCode": 400,
@@ -41,6 +41,7 @@ def main(event, context):
                 "title": title,
                 "artist": artist,
                 "plays": 0,
+                "audioS3Key": audios3Key
                 "createdAt": datetime.utcnow().isoformat() + "Z"
             },
             ConditionExpression="attribute_not_exists(PK)"
