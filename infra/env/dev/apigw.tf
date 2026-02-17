@@ -67,6 +67,25 @@ resource "aws_api_gateway_integration" "play_track" {
   uri                     = module.api_lambdas["api_start_stream"].invoke_arn
 }
 
+# GET /tracks
+resource "aws_api_gateway_method" "get_tracks" {
+  rest_api_id   = module.api_gateway.id
+  resource_id   = aws_api_gateway_resource.tracks.id
+  http_method   = "GET"
+  authorization = "NONE" # ou "COGNITO_USER_POOLS" si tu veux protéger
+}
+
+resource "aws_api_gateway_integration" "get_tracks" {
+  rest_api_id             = module.api_gateway.id
+  resource_id             = aws_api_gateway_resource.tracks.id
+  http_method             = aws_api_gateway_method.get_tracks.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = module.api_lambdas["api_get_tracks"].invoke_arn
+}
+
+
+
 
 # GET /tracks/{trackId}
 

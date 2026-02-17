@@ -174,3 +174,31 @@ SK = DATE#2026-02-10
   "SK": "DATE#2026-02-10",
   "dailyPlays": 1532
 }
+
+
+
+
+
+
+# Schéma d'APIS
+
+1- GET /me.    ------> Lambda api_get_me.  ------> Table users
+
+2- GET /me/listening/history  ----> Lambda api_get_my_history ----> Table Listening events 
+
+3- GET /tracks.  ------> Lambda api_get_tracks ----> Table tracks
+
+
+4- GET /tracks/{trackId} -----> Lambda api_get_tracks ----> Table tracks
+
+
+5- GET /tracks/{trackId}/stats ----> Lambda api_get_track_stats -----> listening-events
+
+
+
+6- POST /tracks/{trackId}/play  ----> Lambda api_start_stream ----> tracks
+
+
+7- POST /events/listening ----> Lambda api_store_listening_event ---> /events/listening
+
+9 GET /health -----> lambda api_get_health 
