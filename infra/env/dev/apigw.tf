@@ -103,7 +103,7 @@ resource "aws_api_gateway_method" "get_track_stats" {
   resource_id   = aws_api_gateway_resource.track_stats.id
   http_method   = "GET"
   authorization = "COGNITO_USER_POOLS"  
-  authorizer_id = module.api_gateway.cognito_authorizer_id
+  authorizer_id = module.api_gateway.authorizer_id
 }
 
 resource "aws_api_gateway_integration" "get_track_stats" {
@@ -179,7 +179,7 @@ resource "aws_api_gateway_method" "get_me_listening_history" {
   resource_id   = aws_api_gateway_resource.me_listening_history.id
   http_method   = "GET"
   authorization = "COGNITO_USER_POOLS"
-  authorizer_id = module.api_gateway.cognito_authorizer_id
+  authorizer_id = module.api_gateway.authorizer_id
 }
 
 resource "aws_api_gateway_integration" "get_me_listening_history" {
@@ -348,7 +348,7 @@ resource "aws_api_gateway_deployment" "this" {
     aws_api_gateway_integration.post_track,
     aws_api_gateway_integration.search,
     aws_api_gateway_integration.health_get,
-    aws_api_gaaws_api_gateway_integration.get_me_listening_history
+    aws_api_gateway_integration.get_me_listening_history
   ]
 
   triggers = {
