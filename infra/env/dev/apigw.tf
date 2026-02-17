@@ -285,6 +285,7 @@ resource "aws_api_gateway_deployment" "this" {
     aws_api_gateway_integration.get_me,
     aws_api_gateway_integration.get_analytics,
     aws_api_gateway_integration.get_track,
+    aws_api_gateway_integration.get_tracks,
     aws_api_gateway_integration.post_track,
     aws_api_gateway_integration.search,
   ]
