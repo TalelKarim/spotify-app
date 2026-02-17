@@ -1,5 +1,3 @@
-# api_get_track.py
-
 import os
 import boto3
 import json
@@ -24,6 +22,7 @@ def decimal_to_native(obj):
 
 
 def main(event, context):
+    # pathParameters.trackId vient d'API Gateway : /tracks/{trackId}
     track_id = event["pathParameters"]["trackId"]
 
     pk = f"TRACK#{track_id}"
@@ -41,13 +40,21 @@ def main(event, context):
     if not item:
         return {
             "statusCode": 404,
-            "body": json.dumps({"error": "Track not found"})
+            "body": json.dumps({"error": "Track not found"}),
+            "headers": {
+                "Content-Type": "application/json"
+            }
         }
 
-    # On nettoie l'item
+    # On enlève PK/SK et on convertit les décimaux
     cleaned = {k: v for k, v in item.items() if k not in ("PK", "SK")}
     cleaned = decimal_to_native(cleaned)
+
+    # On force trackId cohérent avec l'URL (au cas où)
     cleaned["trackId"] = track_id
+
+    # Exemple de champ qui sera présent si tu l'as mis à la création :
+    # cleaned["audioS3Key"]  -> "audio/tracks/track-123.mp3"
 
     return {
         "statusCode": 200,
