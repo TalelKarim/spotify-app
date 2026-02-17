@@ -35,6 +35,7 @@ LAMBDAS="
 api_get_track:api/get_track
 api_get_tracks:api/get_tracks
 
+api_get_track_stats:api/get_track_stats
 api_healthcheck:api/healthcheck
 
 api_create_track:api/create_track

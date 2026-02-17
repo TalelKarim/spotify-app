@@ -27,6 +27,9 @@ resource "aws_api_gateway_resource" "play" {
 }
 
 
+
+
+
 # POST /tracks
 
 resource "aws_api_gateway_method" "post_track" {
@@ -84,6 +87,33 @@ resource "aws_api_gateway_integration" "get_tracks" {
   uri                     = module.api_lambdas["api_get_tracks"].invoke_arn
 }
 
+
+
+
+# GET /tracks/{trackId}/stats
+
+resource "aws_api_gateway_resource" "track_stats" {
+  rest_api_id = module.api_gateway.id
+  parent_id   = aws_api_gateway_resource.track_id.id
+  path_part   = "stats"
+}
+
+resource "aws_api_gateway_method" "get_track_stats" {
+  rest_api_id   = module.api_gateway.id
+  resource_id   = aws_api_gateway_resource.track_stats.id
+  http_method   = "GET"
+  authorization = "NONE"  # comme tu le veux
+  # authorizer_id = module.api_gateway.cognito_authorizer_id
+}
+
+resource "aws_api_gateway_integration" "get_track_stats" {
+  rest_api_id             = module.api_gateway.id
+  resource_id             = aws_api_gateway_resource.track_stats.id
+  http_method             = aws_api_gateway_method.get_track_stats.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = module.api_lambdas["api_get_track_stats"].invoke_arn
+}
 
 
 
@@ -174,43 +204,6 @@ resource "aws_api_gateway_integration" "get_analytics" {
 
 
 
-
-
-
-#users
-
-
-# # GET /users/{userId}
-
-
-# resource "aws_api_gateway_resource" "users" {
-#   rest_api_id = module.api_gateway.id
-#   parent_id   = module.api_gateway.root_resource_id
-#   path_part   = "users"
-# }
-
-# resource "aws_api_gateway_resource" "user_id" {
-#   rest_api_id = module.api_gateway.id
-#   parent_id   = aws_api_gateway_resource.users.id
-#   path_part   = "{userId}"
-# }
-
-
-# resource "aws_api_gateway_method" "get_user" {
-#   rest_api_id   = module.api_gateway.id
-#   resource_id   = aws_api_gateway_resource.user_id.id
-#   http_method   = "GET"
-#   authorization = "NONE"
-# }
-
-# resource "aws_api_gateway_integration" "get_user" {
-#   rest_api_id             = module.api_gateway.id
-#   resource_id             = aws_api_gateway_resource.user_id.id
-#   http_method             = aws_api_gateway_method.get_user.http_method
-#   integration_http_method = "POST"
-#   type                    = "AWS_PROXY"
-#   uri                     = module.api_lambdas["api_get_user"].invoke_arn
-# }
 
 
 
