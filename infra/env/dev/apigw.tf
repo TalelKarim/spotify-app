@@ -275,6 +275,36 @@ resource "aws_api_gateway_integration" "search" {
 
 
 
+
+
+
+# health 
+
+
+resource "aws_api_gateway_resource" "health" {
+  rest_api_id = module.api_gateway.id
+  parent_id   = module.api_gateway.root_resource_id
+  path_part   = "health"
+}
+
+resource "aws_api_gateway_method" "health_get" {
+  rest_api_id   = module.api_gateway.id
+  resource_id   = aws_api_gateway_resource.health.id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "health_get" {
+  rest_api_id             = module.api_gateway.id
+  resource_id             = aws_api_gateway_resource.health.id
+  http_method             = aws_api_gateway_method.health_get.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = module.api_lambdas["api_healthcheck"].invoke_arn
+}
+
+
+
 # Api Gateway Deployment
 resource "aws_api_gateway_deployment" "this" {
   rest_api_id = module.api_gateway.id

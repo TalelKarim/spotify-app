@@ -50,6 +50,7 @@ locals {
 
     }
 
+
     api_search = {
       role = module.iam.lambda_api_role_arn
       env = {
@@ -57,9 +58,19 @@ locals {
       }
     }
 
+
+
+
     api_get_me = {
       role = module.iam.lambda_api_role_arn
       env  = {}
+
+
+    api_health_check = {
+      role = module.iam.lambda_api_role_arn
+      env = {
+      }
+    }  
 }
 
   }
@@ -81,7 +92,9 @@ module "api_lambdas" {
 resource "aws_lambda_permission" "api_permissions" {
   for_each = {
     get_track            = { lambda = "api_get_track", path = "GET/tracks/*" }
-    get_tracks            = { lambda = "api_get_tracks", path = "GET/tracks" }
+    get_tracks            = { lambda = "api_get_tracks", path = "GET/tracks*" }
+    health            = { lambda = "api_health_check", path = "GET/health" }
+    
     get_analytics        = { lambda = "api_get_analytics", path = "GET/analytics/global" }
     post_track           = { lambda = "api_create_track", path = "POST/tracks" }
     get_me           = { lambda = "api_get_me", path = "GET/me" }
