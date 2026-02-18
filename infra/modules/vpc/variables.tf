@@ -1,5 +1,5 @@
 variable "enable_nat_gateway" {
-  type = bool
+  type    = bool
   default = true
 }
 
@@ -24,13 +24,13 @@ variable "availability_zones" {
 
 
 variable "is_private" {
-  type = bool
+  type    = bool
   default = true
 }
 
 
 variable "is_public" {
-  type = bool
+  type    = bool
   default = true
 }
 

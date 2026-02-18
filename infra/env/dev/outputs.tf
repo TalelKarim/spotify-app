@@ -25,3 +25,8 @@ output "apigw_invoke_url_dev" {
 output "COGNITO_USER_POOLS" {
   value = module.cognito.user_pool_arn
 }
+
+
+output "opensearch_domain" {
+  value = module.opensearch.domain_endpoint
+}
