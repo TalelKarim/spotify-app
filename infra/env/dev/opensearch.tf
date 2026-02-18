@@ -8,7 +8,7 @@ module "opensearch" {
 
   # VPC / subnets : on réutilise ton module vpc
   vpc_id     = module.vpc.vpc_id
-  subnet_ids = module.vpc.private_subnets_ids[0]
+  subnet_ids =  [module.vpc.private_subnets_ids[0]]
 
   # Pour l’instant : on autorise tout le CIDR du VPC à parler à OS
   # (plus tard on restreindra au SG des Lambdas)
