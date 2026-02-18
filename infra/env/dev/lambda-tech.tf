@@ -8,8 +8,9 @@ locals {
     }
 
     tech_reindex_opensearch = {
-      role = module.iam.lambda_events_role_arn
-      env  = {}
+      role        = module.iam.lambda_events_role_arn
+      env         = {}
+      vpc_enabled = true
     }
   }
 }
@@ -22,6 +23,10 @@ module "tech_lambdas" {
   role_arn      = each.value.role
   handler       = "handler.main"
   package_path  = "../../../app/lambdas/dist/${each.key}.zip"
+
+  subnet_ids         = each.value.vpc_enabled ? module.vpc.private_subnets_ids : []
+  security_group_ids = each.value.vpc_enabled ? [aws_security_group.lambda_search.id] : []
+
 
   environment_variables = each.value.env
 }

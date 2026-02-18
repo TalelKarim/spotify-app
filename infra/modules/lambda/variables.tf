@@ -46,3 +46,21 @@ variable "sqs_queue_arns" {
 }
 
 
+
+variable "vpc_enabled" {
+  type    = bool
+  default = false
+}
+
+
+variable "subnet_ids" {
+  description = "Subnets pour attacher la Lambda à un VPC (optionnel)"
+  type        = list(string)
+  default     = []
+}
+
+variable "security_group_ids" {
+  description = "SGs à utiliser si la Lambda est dans un VPC (optionnel)"
+  type        = list(string)
+  default     = []
+}

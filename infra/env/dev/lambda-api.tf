@@ -56,6 +56,7 @@ locals {
       env = {
         TRACKS_TABLE = module.dynamodb.tracks_table_name
       }
+      vpc_enabled = true
     }
 
     api_get_track_stats = {
@@ -96,6 +97,12 @@ module "api_lambdas" {
   role_arn      = each.value.role
   handler       = "handler.main"
   package_path  = "../../../app/lambdas/dist/${each.key}.zip"
+
+
+  #vpc conf 
+
+  subnet_ids         = each.value.vpc_enabled ? module.vpc.private_subnets_ids : []
+  security_group_ids = each.value.vpc_enabled ? [aws_security_group.lambda_search.id] : []
 
   environment_variables = each.value.env
 }
