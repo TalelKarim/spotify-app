@@ -24,8 +24,10 @@ module "tech_lambdas" {
   handler       = "handler.main"
   package_path  = "../../../app/lambdas/dist/${each.key}.zip"
 
-  subnet_ids         = each.value.vpc_enabled ? module.vpc.private_subnets_ids : []
-  security_group_ids = each.value.vpc_enabled ? [aws_security_group.lambda_search.id] : []
+  #vpc conf 
+  subnet_ids = lookup(each.value, "vpc_enabled", false) ? module.vpc.private_subnets_ids  : []
+
+  security_group_ids = lookup(each.value, "vpc_enabled", false)  ? [aws_security_group.lambda_search.id] : []
 
 
   environment_variables = each.value.env
