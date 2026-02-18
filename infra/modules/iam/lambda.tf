@@ -364,13 +364,13 @@ resource "aws_iam_role_policy_attachment" "api_eventbridge_put" {
 
 
 #vpc access
-resource "aws_iam_role_policy_attachment" "vpc_access" {
+resource "aws_iam_role_policy_attachment" "vpc_access_tech" {
   role       = aws_iam_role.lambda_tech.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
 
 
-resource "aws_iam_role_policy_attachment" "vpc_access" {
+resource "aws_iam_role_policy_attachment" "vpc_access_api" {
   role       = aws_iam_role.lambda_api.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
