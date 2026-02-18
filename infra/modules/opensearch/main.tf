@@ -46,6 +46,30 @@ resource "aws_cloudwatch_log_group" "index_slow" {
   })
 }
 
+resource "aws_cloudwatch_log_resource_policy" "opensearch_logs" {
+  policy_name = "${var.domain_name}-opensearch-logs-policy"
+
+  policy_document = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "OpenSearchLogsToCloudWatch"
+        Effect = "Allow"
+        Principal = {
+          Service = "es.amazonaws.com"
+        }
+        Action = [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "logs:DescribeLogStreams"
+        ]
+        Resource = "${aws_cloudwatch_log_group.index_slow.arn}:*"
+      }
+    ]
+  })
+}
+
+
 resource "aws_opensearch_domain" "this" {
   depends_on = [aws_iam_service_linked_role.opensearch]
 
