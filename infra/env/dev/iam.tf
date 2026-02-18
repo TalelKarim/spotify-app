@@ -13,6 +13,8 @@ module "iam" {
 
   tracks_stream_arn = module.dynamodb.tracks_table_stream_arn
 
+  opensearch_domain_arn = module.opensearch.domain_arn
+
   dynamodb_table_arns = {
     api = [
       module.dynamodb.tracks_table_arn,

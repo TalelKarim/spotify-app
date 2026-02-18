@@ -7,8 +7,8 @@ module "dynamodb" {
 
 
 resource "aws_lambda_event_source_mapping" "tracks_to_opensearch" {
-  event_source_arn  = module.dynamodb.tracks_table_stream_arn
-  function_name     = module.tech_lambdas["tech_reindex_opensearch"].lambda_arn
+  event_source_arn = module.dynamodb.tracks_table_stream_arn
+  function_name    = module.tech_lambdas["tech_reindex_opensearch"].lambda_arn
 
   starting_position      = "LATEST"
   batch_size             = 100

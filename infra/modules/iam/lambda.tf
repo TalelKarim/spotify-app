@@ -94,8 +94,8 @@ resource "aws_iam_policy" "lambda_logs" {
 # Policy pour consommer le stream + écrire dans OpenSearch
 data "aws_iam_policy_document" "lambda_search_indexer" {
   statement {
-    sid     = "DynamoDBStreamRead"
-    effect  = "Allow"
+    sid    = "DynamoDBStreamRead"
+    effect = "Allow"
     actions = [
       "dynamodb:DescribeStream",
       "dynamodb:GetRecords",
@@ -108,8 +108,8 @@ data "aws_iam_policy_document" "lambda_search_indexer" {
   }
 
   statement {
-    sid     = "OpenSearchIndexWrite"
-    effect  = "Allow"
+    sid    = "OpenSearchIndexWrite"
+    effect = "Allow"
     actions = [
       "es:ESHttpGet",
       "es:ESHttpPost",
@@ -117,7 +117,7 @@ data "aws_iam_policy_document" "lambda_search_indexer" {
       "es:ESHttpDelete"
     ]
     resources = [
-      "${module.opensearch.domain_arn}/*"
+      "${var.opensearch_domain_arn}/*"
     ]
   }
 }
@@ -134,7 +134,7 @@ data "aws_iam_policy_document" "lambda_api_search" {
       "es:ESHttpPost" # pour /_search en POST
     ]
     resources = [
-      "${module.opensearch.domain_arn}/*"
+      "${var.opensearch_domain_arn}/*"
     ]
   }
 }

@@ -35,3 +35,8 @@ variable "eventbridge_bus_arn" {
 variable "tracks_stream_arn" {
   type = string
 }
+
+
+variable "opensearch_domain_arn" {
+  type = string
+}

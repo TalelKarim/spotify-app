@@ -25,7 +25,7 @@ resource "aws_dynamodb_table" "tracks" {
 
 
   stream_enabled   = true
-  stream_view_type = "NEW_AND_OLD_IMAGES" 
+  stream_view_type = "NEW_AND_OLD_IMAGES"
 
 
 }

@@ -54,7 +54,7 @@ locals {
     api_search = {
       role = module.iam.lambda_api_role_arn
       env = {
-        TRACKS_TABLE = module.dynamodb.tracks_table_name
+        TRACKS_TABLE        = module.dynamodb.tracks_table_name
         OPENSEARCH_ENDPOINT = module.opensearch.domain_endpoint
         OPENSEARCH_INDEX    = "tracks"
       }
@@ -102,9 +102,9 @@ module "api_lambdas" {
 
 
   #vpc conf 
-  subnet_ids = lookup(each.value, "vpc_enabled", false) ? module.vpc.private_subnets_ids  : []
+  subnet_ids = lookup(each.value, "vpc_enabled", false) ? module.vpc.private_subnets_ids : []
 
-  security_group_ids = lookup(each.value, "vpc_enabled", false)  ? [aws_security_group.lambda_search.id] : []
+  security_group_ids = lookup(each.value, "vpc_enabled", false) ? [aws_security_group.lambda_search.id] : []
 
   environment_variables = each.value.env
 }
