@@ -1,4 +1,4 @@
-module "vpc_db" {
+module "vpc" {
   source             = "../../modules/vpc"
   env                = var.env
   vpc_name           = var.vpc_name
