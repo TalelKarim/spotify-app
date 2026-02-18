@@ -23,3 +23,12 @@ variable "sqs_queue_arns" {
   type    = list(string)
   default = []
 }
+
+
+variable "vpc_name" {
+  type = string
+}
+
+variable "vpc_cidr" {
+  type = string
+}
