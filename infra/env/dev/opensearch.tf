@@ -1,6 +1,7 @@
 module "opensearch" {
   source = "../../modules/opensearch"
 
+
   # Nom du domaine (doit être unique dans la région, <= 28 chars)
   domain_name    = "spotify-dev-search"
   engine_version = "OpenSearch_2.11"
