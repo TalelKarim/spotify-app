@@ -1,14 +1,14 @@
 locals {
   tech_lambdas = {
     tech_ingest_audio_metadata = {
-      role = module.iam.lambda_events_role_arn
+      role = module.iam.lambda_tech_role_arn
       env = {
         TRACKS_TABLE = module.dynamodb.tracks_table_name
       }
     }
 
     tech_reindex_opensearch = {
-      role        = module.iam.lambda_events_role_arn
+      role        = module.iam.lambda_tech_role_arn
       env         = {}
       vpc_enabled = true
     }

@@ -17,6 +17,23 @@ resource "aws_iam_role" "lambda_api" {
   })
 }
 
+
+
+resource "aws_iam_role" "lambda_tech" {
+  name = "${var.project_name}-lambda-tech-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "lambda.amazonaws.com"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
 resource "aws_iam_role" "lambda_events" {
   name = "${var.project_name}-lambda-events-role"
 
@@ -235,6 +252,9 @@ resource "aws_iam_role_policy_attachment" "api_logs" {
   policy_arn = aws_iam_policy.lambda_logs.arn
 }
 
+
+
+
 resource "aws_iam_role_policy_attachment" "events_logs" {
   role       = aws_iam_role.lambda_events.name
   policy_arn = aws_iam_policy.lambda_logs.arn
@@ -249,6 +269,11 @@ resource "aws_iam_role_policy_attachment" "steps_logs" {
 }
 
 
+
+resource "aws_iam_role_policy_attachment" "tech_logs" {
+  role       = aws_iam_role.lambda_tech.name
+  policy_arn = aws_iam_policy.lambda_logs.arn
+}
 #sqs
 
 resource "aws_iam_role_policy_attachment" "sqs_access" {
@@ -278,6 +303,12 @@ resource "aws_iam_role_policy_attachment" "steps_xray" {
 
 
 
+
+resource "aws_iam_role_policy_attachment" "tech_xray" {
+  role       = aws_iam_role.lambda_tech.name
+  policy_arn = aws_iam_policy.lambda_xray.arn
+}
+
 # chiffrement kms
 
 resource "aws_iam_role_policy_attachment" "api_kms" {
@@ -295,7 +326,10 @@ resource "aws_iam_role_policy_attachment" "steps_kms" {
   policy_arn = aws_iam_policy.lambda_kms.arn
 }
 
-
+resource "aws_iam_role_policy_attachment" "tech_kms" {
+  role       = aws_iam_role.lambda_tech.name
+  policy_arn = aws_iam_policy.lambda_kms.arn
+}
 
 # dynamodb 
 resource "aws_iam_role_policy_attachment" "api_dynamodb" {
@@ -316,9 +350,27 @@ resource "aws_iam_role_policy_attachment" "orch_dynamodb" {
 }
 
 
+resource "aws_iam_role_policy_attachment" "tech_dynamodb" {
+  role       = aws_iam_role.lambda_tech.name
+  policy_arn = aws_iam_policy.lambda_orch_dynamodb.arn
+}
 
 
 resource "aws_iam_role_policy_attachment" "api_eventbridge_put" {
   role       = aws_iam_role.lambda_api.name
   policy_arn = aws_iam_policy.lambda_eventbridge_put.arn
+}
+
+
+
+#vpc access
+resource "aws_iam_role_policy_attachment" "vpc_access" {
+  role       = aws_iam_role.lambda_tech.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+}
+
+
+resource "aws_iam_role_policy_attachment" "vpc_access" {
+  role       = aws_iam_role.lambda_api.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
