@@ -73,17 +73,17 @@ locals {
 
     api_get_myhistory = {
       role = module.iam.lambda_api_role_arn
-      env  = {
+      env = {
         LISTENING_EVENTS_TABLE = module.dynamodb.listening_events_table_name
       }
     }
 
 
     api_healthcheck = {
-        role = module.iam.lambda_api_role_arn
-        env = {
-        }
+      role = module.iam.lambda_api_role_arn
+      env = {
       }
+    }
 
   }
 }
@@ -103,12 +103,12 @@ module "api_lambdas" {
 
 resource "aws_lambda_permission" "api_permissions" {
   for_each = {
-    get_track  = { lambda = "api_get_track", path = "GET/tracks/*" }
-    get_tracks = { lambda = "api_get_tracks", path = "GET/tracks*" }
-    get_track_stats  = { lambda = "api_get_track_stats", path = "GET/tracks/*" }
-    health     = { lambda = "api_healthcheck", path = "GET/health" }
+    get_track       = { lambda = "api_get_track", path = "GET/tracks/*" }
+    get_tracks      = { lambda = "api_get_tracks", path = "GET/tracks*" }
+    get_track_stats = { lambda = "api_get_track_stats", path = "GET/tracks/*" }
+    health          = { lambda = "api_healthcheck", path = "GET/health" }
 
-    get_my_history  = { lambda = "api_get_myhistory", path = "GET/me/listening/history" }
+    get_my_history       = { lambda = "api_get_myhistory", path = "GET/me/listening/history" }
     get_analytics        = { lambda = "api_get_analytics", path = "GET/analytics/global" }
     post_track           = { lambda = "api_create_track", path = "POST/tracks" }
     get_me               = { lambda = "api_get_me", path = "GET/me" }

@@ -16,7 +16,9 @@ module "iam" {
     api = [
       module.dynamodb.tracks_table_arn,
       module.dynamodb.users_table_arn,
-      module.dynamodb.analytics_table_arn
+      module.dynamodb.analytics_table_arn,
+      module.dynamodb.listening_events_table_arn
+
     ]
 
     events = [

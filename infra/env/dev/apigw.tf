@@ -102,7 +102,7 @@ resource "aws_api_gateway_method" "get_track_stats" {
   rest_api_id   = module.api_gateway.id
   resource_id   = aws_api_gateway_resource.track_stats.id
   http_method   = "GET"
-  authorization = "COGNITO_USER_POOLS"  
+  authorization = "COGNITO_USER_POOLS"
   authorizer_id = module.api_gateway.authorizer_id
 }
 

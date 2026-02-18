@@ -15,4 +15,4 @@ def main(event, context):
             "email": email
         })
     }
-}
+
