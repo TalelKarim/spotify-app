@@ -438,7 +438,7 @@ resource "aws_iam_policy" "lambda_search_indexer" {
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_search_indexer" {
-  role       = aws_iam_role.lambda_tech_role.name
+  role       = aws_iam_role.lambda_tech.name
   policy_arn = aws_iam_policy.lambda_search_indexer.arn
 }
 
@@ -450,6 +450,6 @@ resource "aws_iam_policy" "lambda_api_search" {
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_api_search" {
-  role       = aws_iam_role.lambda_api_role.name
+  role       = aws_iam_role.lambda_api.name
   policy_arn = aws_iam_policy.lambda_api_search.arn
 }
