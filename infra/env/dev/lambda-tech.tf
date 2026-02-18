@@ -13,7 +13,12 @@ locals {
       vpc_enabled = true
     }
   }
+
+  tracks_stream_arn = module.dynamodb.tracks_table_stream_arn
+
 }
+
+
 
 module "tech_lambdas" {
   source   = "../../modules/lambda"

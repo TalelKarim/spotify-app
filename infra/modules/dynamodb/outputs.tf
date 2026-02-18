@@ -34,3 +34,9 @@ output "analytics_table_name" {
 output "analytics_table_arn" {
   value = aws_dynamodb_table.analytics.arn
 }
+
+
+
+output "tracks_table_stream_arn" {
+  value = aws_dynamodb_table.tracks.stream_arn
+}

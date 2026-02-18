@@ -22,6 +22,12 @@ resource "aws_dynamodb_table" "tracks" {
     enabled     = true
     kms_key_arn = var.kms_key_arn
   }
+
+
+  stream_enabled   = true
+  stream_view_type = "NEW_AND_OLD_IMAGES" 
+
+
 }
 
 ############################
