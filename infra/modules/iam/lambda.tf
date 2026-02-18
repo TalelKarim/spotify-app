@@ -85,6 +85,60 @@ resource "aws_iam_policy" "lambda_logs" {
   })
 }
 
+############################
+# Opensearch
+############################
+
+
+
+# Policy pour consommer le stream + écrire dans OpenSearch
+data "aws_iam_policy_document" "lambda_search_indexer" {
+  statement {
+    sid     = "DynamoDBStreamRead"
+    effect  = "Allow"
+    actions = [
+      "dynamodb:DescribeStream",
+      "dynamodb:GetRecords",
+      "dynamodb:GetShardIterator",
+      "dynamodb:ListStreams"
+    ]
+    resources = [
+      var.tracks_stream_arn
+    ]
+  }
+
+  statement {
+    sid     = "OpenSearchIndexWrite"
+    effect  = "Allow"
+    actions = [
+      "es:ESHttpGet",
+      "es:ESHttpPost",
+      "es:ESHttpPut",
+      "es:ESHttpDelete"
+    ]
+    resources = [
+      "${module.opensearch.domain_arn}/*"
+    ]
+  }
+}
+
+
+
+
+data "aws_iam_policy_document" "lambda_api_search" {
+  statement {
+    sid    = "OpenSearchSearchRead"
+    effect = "Allow"
+    actions = [
+      "es:ESHttpGet",
+      "es:ESHttpPost" # pour /_search en POST
+    ]
+    resources = [
+      "${module.opensearch.domain_arn}/*"
+    ]
+  }
+}
+
 
 
 
@@ -373,4 +427,29 @@ resource "aws_iam_role_policy_attachment" "vpc_access_tech" {
 resource "aws_iam_role_policy_attachment" "vpc_access_api" {
   role       = aws_iam_role.lambda_api.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+}
+
+
+
+# opensearch
+resource "aws_iam_policy" "lambda_search_indexer" {
+  name   = "lambda-search-indexer"
+  policy = data.aws_iam_policy_document.lambda_search_indexer.json
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_search_indexer" {
+  role       = aws_iam_role.lambda_tech_role.name
+  policy_arn = aws_iam_policy.lambda_search_indexer.arn
+}
+
+
+
+resource "aws_iam_policy" "lambda_api_search" {
+  name   = "lambda-api-search"
+  policy = data.aws_iam_policy_document.lambda_api_search.json
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_api_search" {
+  role       = aws_iam_role.lambda_api_role.name
+  policy_arn = aws_iam_policy.lambda_api_search.arn
 }

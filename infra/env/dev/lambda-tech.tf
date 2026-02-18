@@ -9,7 +9,10 @@ locals {
 
     tech_reindex_opensearch = {
       role        = module.iam.lambda_tech_role_arn
-      env         = {}
+      env         = {
+          OPENSEARCH_ENDPOINT = module.opensearch.domain_endpoint
+          OPENSEARCH_INDEX    = "tracks"
+      }
       vpc_enabled = true
     }
   }

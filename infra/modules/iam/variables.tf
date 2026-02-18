@@ -30,3 +30,8 @@ variable "eventbridge_bus_arn" {
   type        = string
 }
 
+
+
+variable "tracks_stream_arn" {
+  type = string
+}
