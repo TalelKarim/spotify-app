@@ -64,3 +64,9 @@ variable "security_group_ids" {
   type        = list(string)
   default     = []
 }
+
+variable "layers" {
+  description = "Optional Lambda layer ARNs"
+  type        = list(string)
+  default     = []
+}

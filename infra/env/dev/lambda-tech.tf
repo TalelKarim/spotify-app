@@ -38,5 +38,8 @@ module "tech_lambdas" {
   security_group_ids = lookup(each.value, "vpc_enabled", false) ? [aws_security_group.lambda_search.id] : []
 
 
+
+  layers = contains(["tech_reindex_opensearch"], each.key) ? [aws_lambda_layer_version.python_requests.arn] : []
+
   environment_variables = each.value.env
 }

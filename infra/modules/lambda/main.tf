@@ -14,6 +14,9 @@ resource "aws_lambda_function" "this" {
     variables = var.environment_variables
   }
 
+  layers = var.layers
+
+
   dynamic "vpc_config" {
     for_each = length(var.subnet_ids) > 0 && length(var.security_group_ids) > 0 ? [1] : []
     content {

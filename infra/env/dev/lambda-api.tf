@@ -107,6 +107,8 @@ module "api_lambdas" {
   security_group_ids = lookup(each.value, "vpc_enabled", false) ? [aws_security_group.lambda_search.id] : []
 
   environment_variables = each.value.env
+
+  layers = contains(["api_search"], each.key)   ? [aws_lambda_layer_version.python_requests.arn] : []
 }
 
 
