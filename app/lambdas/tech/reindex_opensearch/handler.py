@@ -56,17 +56,24 @@ def _index_document(track_id: str, doc: dict):
     url = f"{OPENSEARCH_ENDPOINT}/{TRACKS_INDEX}/_doc/{track_id}"
     logger.info(f"Indexing document track_id={track_id} url={url}")
 
-    r = requests.put(
-        url,
-        auth=awsauth,
-        json=doc,
-        headers={"Content-Type": "application/json"},
-        timeout=3,
-    )
-    if not r.ok:
-        logger.error(
-            f"Failed to index doc {track_id} - status={r.status_code} body={r.text}"
+    try:
+        r = requests.put(
+            url,
+            auth=awsauth,
+            json=doc,
+            headers={"Content-Type": "application/json"},
+            timeout=10,  # ← on passe à 10s
         )
+        if not r.ok:
+            logger.error(
+                f"Failed to index doc {track_id} - status={r.status_code} body={r.text}"
+            )
+    except Timeout:
+        logger.error(
+            f"Timeout while indexing doc {track_id} on {url} (increase timeout or check cluster health)"
+        )
+    except RequestException as e:
+        logger.error(f"RequestException while indexing doc {track_id}: {e}")
 
 
 def _delete_document(track_id: str):
@@ -76,17 +83,24 @@ def _delete_document(track_id: str):
     url = f"{OPENSEARCH_ENDPOINT}/{TRACKS_INDEX}/_doc/{track_id}"
     logger.info(f"Deleting document track_id={track_id} url={url}")
 
-    r = requests.delete(
-        url,
-        auth=awsauth,
-        headers={"Content-Type": "application/json"},
-        timeout=3,
-    )
-    if not r.ok and r.status_code != 404:
-        logger.error(
-            f"Failed to delete doc {track_id} - status={r.status_code} body={r.text}"
+    try:
+        r = requests.delete(
+            url,
+            auth=awsauth,
+            headers={"Content-Type": "application/json"},
+            timeout=10,  # ← pareil ici
         )
-
+        # 404 = doc pas trouvé → pas grave
+        if not r.ok and r.status_code != 404:
+            logger.error(
+                f"Failed to delete doc {track_id} - status={r.status_code} body={r.text}"
+            )
+    except Timeout:
+        logger.error(
+            f"Timeout while deleting doc {track_id} on {url} (increase timeout or check cluster health)"
+        )
+    except RequestException as e:
+        logger.error(f"RequestException while deleting doc {track_id}: {e}")
 
 def main(event, context):
     """
