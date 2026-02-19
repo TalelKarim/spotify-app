@@ -1,108 +1,140 @@
 import os
 import json
 import logging
+from decimal import Decimal
 
 import boto3
-from boto3.dynamodb.types import TypeDeserializer
 import requests
 from requests_aws4auth import AWS4Auth
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-region = os.environ.get("AWS_REGION", "eu-west-1")
-service = "es"
+# --- Config OpenSearch depuis les variables d'env ---
+RAW_ENDPOINT = os.environ["OPENSEARCH_ENDPOINT"]  # ex: vpc-spotify-dev-search-...eu-west-1.es.amazonaws.com
+OPENSEARCH_REGION = os.environ.get("OPENSEARCH_REGION", "eu-west-1")
+TRACKS_INDEX = os.environ.get("OPENSEARCH_INDEX_TRACKS", "tracks")
 
+# On s’assure que l’endpoint a bien un schéma https://
+if RAW_ENDPOINT.startswith("https://"):
+    OPENSEARCH_ENDPOINT = RAW_ENDPOINT.rstrip("/")  # éviter double slash
+else:
+    OPENSEARCH_ENDPOINT = f"https://{RAW_ENDPOINT}".rstrip("/")
+
+# --- Auth IAM SigV4 pour OpenSearch ---
 session = boto3.Session()
 credentials = session.get_credentials()
+creds = credentials.get_frozen_credentials()
+
 awsauth = AWS4Auth(
-    credentials.access_key,
-    credentials.secret_key,
-    region,
-    service,
-    session_token=credentials.token,
+    creds.access_key,
+    creds.secret_key,
+    OPENSEARCH_REGION,
+    "es",  # service OpenSearch/ES
+    session_token=creds.token,
 )
 
-OPENSEARCH_ENDPOINT = os.environ["OPENSEARCH_ENDPOINT"].rstrip("/")
-INDEX_NAME = os.environ.get("OPENSEARCH_INDEX", "tracks")
 
-deserializer = TypeDeserializer()
+def _decimal_to_native(obj):
+    if isinstance(obj, Decimal):
+        if obj % 1 == 0:
+            return int(obj)
+        return float(obj)
+    if isinstance(obj, list):
+        return [_decimal_to_native(x) for x in obj]
+    if isinstance(obj, dict):
+        return {k: _decimal_to_native(v) for k, v in obj.items()}
+    return obj
 
 
-def _from_ddb(image: dict) -> dict:
-    """Convertit un NewImage/OldImage DynamoDB en dict Python natif."""
-    return {k: deserializer.deserialize(v) for k, v in image.items()}
+def _index_document(track_id: str, doc: dict):
+    """
+    Indexe ou met à jour un document dans OpenSearch.
+    """
+    url = f"{OPENSEARCH_ENDPOINT}/{TRACKS_INDEX}/_doc/{track_id}"
+    logger.info(f"Indexing document track_id={track_id} url={url}")
 
-
-def _index_document(doc_id: str, body: dict):
-    url = f"{OPENSEARCH_ENDPOINT}/{INDEX_NAME}/_doc/{doc_id}"
     r = requests.put(
         url,
         auth=awsauth,
-        json=body,
+        json=doc,
         headers={"Content-Type": "application/json"},
         timeout=3,
     )
-    if r.status_code >= 300:
-        logger.error("Failed to index doc %s: %s", doc_id, r.text)
+    if not r.ok:
+        logger.error(
+            f"Failed to index doc {track_id} - status={r.status_code} body={r.text}"
+        )
 
 
-def _delete_document(doc_id: str):
-    url = f"{OPENSEARCH_ENDPOINT}/{INDEX_NAME}/_doc/{doc_id}"
-    r = requests.delete(url, auth=awsauth, timeout=3)
-    if r.status_code not in (200, 404):
-        logger.error("Failed to delete doc %s: %s", doc_id, r.text)
+def _delete_document(track_id: str):
+    """
+    Supprime un document de l’index OpenSearch.
+    """
+    url = f"{OPENSEARCH_ENDPOINT}/{TRACKS_INDEX}/_doc/{track_id}"
+    logger.info(f"Deleting document track_id={track_id} url={url}")
+
+    r = requests.delete(
+        url,
+        auth=awsauth,
+        headers={"Content-Type": "application/json"},
+        timeout=3,
+    )
+    if not r.ok and r.status_code != 404:
+        logger.error(
+            f"Failed to delete doc {track_id} - status={r.status_code} body={r.text}"
+        )
 
 
 def main(event, context):
-    logger.info("Received %d records from stream", len(event.get("Records", [])))
+    """
+    Handler déclenché par DynamoDB Streams sur la table tracks.
+    Gère INSERT / MODIFY / REMOVE.
+    """
+    records = event.get("Records", [])
+    logger.info(f"Received {len(records)} records from stream")
 
-    for record in event.get("Records", []):
-        event_name = record["eventName"]
-        ddb = record["dynamodb"]
-
+    for record in records:
         try:
+            event_name = record["eventName"]  # INSERT / MODIFY / REMOVE
+            ddb = record["dynamodb"]
+
             if event_name in ("INSERT", "MODIFY"):
-                new_image = ddb.get("NewImage")
-                if not new_image:
-                    continue
-                item = _from_ddb(new_image)
+                new_image = ddb.get("NewImage", {})
+                pk = new_image.get("PK", {}).get("S")
+                sk = new_image.get("SK", {}).get("S")
 
-                # On ne traite que les lignes METADATA des tracks
-                if item.get("SK") != "METADATA":
-                    continue
-
-                track_id = item.get("trackId")
-                if not track_id:
+                # On ne s’occupe que des METADATA de tracks
+                if not pk or not pk.startswith("TRACK#") or sk != "METADATA":
                     continue
 
-                doc = {
-                    "trackId": track_id,
-                    "title": item.get("title"),
-                    "artist": item.get("artist"),
-                    "audioS3Key": item.get("audioS3Key"),
-                    "plays": item.get("plays", 0),
-                    "createdAt": item.get("createdAt"),
-                }
+                track_id = pk.split("#", 1)[1]
+
+                # Convertir l’image DynamoDB vers un dict natif
+                deserializer = boto3.dynamodb.types.TypeDeserializer()
+                native_item = {k: deserializer.deserialize(v) for k, v in new_image.items()}
+
+                # Nettoyage : on retire PK/SK, on sanitise Decimal -> int/float
+                native_item.pop("PK", None)
+                native_item.pop("SK", None)
+                native_item["trackId"] = track_id
+
+                doc = _decimal_to_native(native_item)
 
                 _index_document(track_id, doc)
 
             elif event_name == "REMOVE":
-                old_image = ddb.get("OldImage")
-                if not old_image:
-                    continue
-                item = _from_ddb(old_image)
+                old_image = ddb.get("OldImage", {})
+                pk = old_image.get("PK", {}).get("S")
+                sk = old_image.get("SK", {}).get("S")
 
-                if item.get("SK") != "METADATA":
-                    continue
-
-                track_id = item.get("trackId")
-                if not track_id:
+                if not pk or not pk.startswith("TRACK#") or sk != "METADATA":
                     continue
 
+                track_id = pk.split("#", 1)[1]
                 _delete_document(track_id)
 
-        except Exception as e:  # on loggue mais on laisse Lambda gérer les retries
-            logger.exception("Error processing record: %s", e)
+        except Exception as e:
+            logger.exception(f"Error processing record: {e}")
 
-    return {"statusCode": 200, "body": json.dumps({"message": "OK"})}
+    return {"statusCode": 200, "body": json.dumps({"processed": len(records)})}
