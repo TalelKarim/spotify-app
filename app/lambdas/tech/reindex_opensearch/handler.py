@@ -6,6 +6,8 @@ from decimal import Decimal
 import boto3
 import requests
 from requests_aws4auth import AWS4Auth
+from boto3.dynamodb.types import TypeDeserializer
+
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -111,8 +113,9 @@ def main(event, context):
                 track_id = pk.split("#", 1)[1]
 
                 # Convertir l’image DynamoDB vers un dict natif
-                deserializer = boto3.dynamodb.types.TypeDeserializer()
+                deserializer = TypeDeserializer()
                 native_item = {k: deserializer.deserialize(v) for k, v in new_image.items()}
+
 
                 # Nettoyage : on retire PK/SK, on sanitise Decimal -> int/float
                 native_item.pop("PK", None)
