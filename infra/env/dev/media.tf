@@ -3,6 +3,6 @@ module "media" {
 
   env                       = var.env
   project                   = "spotify-app"
-  process_upload_lambda_arn = module.event_lambdas["api_search"].lambda_arn
+  process_upload_lambda_arn = module.event_lambdas["event_process_track_upload"].lambda_arn
   kms_key_arn               = module.kms.kms_key_arn
 }

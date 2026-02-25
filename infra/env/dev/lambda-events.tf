@@ -77,7 +77,7 @@ resource "aws_lambda_event_source_mapping" "event_consumers" {
 resource "aws_lambda_permission" "allow_s3" {
   statement_id  = "AllowExecutionFromS3"
   action        = "lambda:InvokeFunction"
-  function_name = module.event_lambdas["api_search"].lambda_name
+  function_name = module.event_lambdas["event_process_track_upload"].lambda_name
   principal     = "s3.amazonaws.com"
   source_arn    = module.media.bucket_arn
 }
