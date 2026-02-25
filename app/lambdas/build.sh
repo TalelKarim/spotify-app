@@ -51,7 +51,7 @@ api_search:api/search
 event_store_listening_event:events/store_listening_event
 event_update_track_stats:events/update_track_stats
 event_publish_notifications:events/publish_notifications
-
+event_process_track_upload:events/process_track_upload/
 orch_update_track_stats:orchestration/update_track_stats
 orch_update_user_stats:orchestration/update_user_stats
 orch_compute_analytics:orchestration/compute_analytics

@@ -15,3 +15,8 @@ variable "price_class" {
   type    = string
   default = "PriceClass_100"
 }
+
+
+variable "process_upload_lambda_arn" {
+  type = string
+}

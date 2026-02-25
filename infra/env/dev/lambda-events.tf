@@ -21,6 +21,19 @@ locals {
       sqs_queue_arns = []
     }
 
+
+    event_process_track_upload = {
+      role = module.iam.lambda_events_role_arn
+
+      env = {
+        TRACKS_TABLE = module.dynamodb.tracks_table_name
+      }
+
+      sqs_link       = false
+      sqs_queue_arns = []
+    }
+
+
     event_publish_notifications = {
       role = module.iam.lambda_events_role_arn
 
@@ -58,4 +71,13 @@ resource "aws_lambda_event_source_mapping" "event_consumers" {
   event_source_arn = module.listening_events_queue.queue_arn
   function_name    = module.event_lambdas[each.key].lambda_arn
   batch_size       = 10
+}
+
+
+resource "aws_lambda_permission" "allow_s3" {
+  statement_id  = "AllowExecutionFromS3"
+  action        = "lambda:InvokeFunction"
+  function_name = module.event_lambdas["api_search"].lambda_name
+  principal     = "s3.amazonaws.com"
+  source_arn    = module.media.bucket_arn
 }

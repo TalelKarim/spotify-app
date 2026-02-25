@@ -168,6 +168,28 @@ resource "aws_iam_policy" "lambda_eventbridge_put" {
 
 
 ############################
+# S3 Policies 
+############################
+
+
+resource "aws_iam_policy" "lambda_api_s3" {
+  name = "${var.project_name}-lambda-api-s3"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+    "Effect": "Allow",
+    "Action": [
+      "s3:PutObject"
+    ],
+    "Resource": "arn:aws:s3:::${var.media_bucket_name}/tracks/*"
+  }]
+  })
+}
+
+
+
+############################
 # Dynamodb Policies 
 ############################
 
@@ -362,6 +384,19 @@ resource "aws_iam_role_policy_attachment" "tech_xray" {
   role       = aws_iam_role.lambda_tech.name
   policy_arn = aws_iam_policy.lambda_xray.arn
 }
+
+
+
+
+#s3
+
+
+resource "aws_iam_role_policy_attachment" "api_s3" {
+  role       = aws_iam_role.lambda_api.name
+  policy_arn = aws_iam_policy.lambda_api_s3.arn
+}
+
+
 
 # chiffrement kms
 

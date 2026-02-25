@@ -18,6 +18,7 @@ locals {
       role = module.iam.lambda_api_role_arn
       env = {
         TRACKS_TABLE = module.dynamodb.tracks_table_name
+        BUCKET_NAME   = module.media.bucket_name
       }
     }
 

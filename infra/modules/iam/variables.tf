@@ -25,6 +25,11 @@ variable "dynamodb_table_arns" {
 }
 
 
+variable "media_bucket_name" {
+ type = string 
+}
+
+
 variable "eventbridge_bus_arn" {
   description = "ARN of the EventBridge bus"
   type        = string

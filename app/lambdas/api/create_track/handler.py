@@ -1,80 +1,74 @@
 import json
 import os
+import uuid
 import boto3
 from datetime import datetime
-from botocore.exceptions import ClientError
 
 dynamodb = boto3.resource("dynamodb")
+s3 = boto3.client("s3")
+
 TABLE_NAME = os.environ["TRACKS_TABLE"]
+BUCKET_NAME = os.environ["TRACKS_BUCKET"]
+
 table = dynamodb.Table(TABLE_NAME)
 
-
 def main(event, context):
-    # Parsing du body
+
     try:
-        body = json.loads(event.get("body") or "{}")
-    except json.JSONDecodeError:
+        body = json.loads(event["body"])
+    except:
         return {
             "statusCode": 400,
-            "body": json.dumps({"error": "Invalid JSON body"}),
-            "headers": {"Content-Type": "application/json"}
+            "body": json.dumps({"error": "Invalid JSON"})
         }
 
-    track_id = body.get("trackId")
+    # Basic validation
     title = body.get("title")
     artist = body.get("artist")
-    audio_s3_key = body.get("audioS3Key")
+    duration = body.get("duration")
 
-    # Validation minimale
-    if not track_id or not title:
+    if not title or not artist:
         return {
             "statusCode": 400,
-            "body": json.dumps({"error": "trackId and title are required"}),
-            "headers": {"Content-Type": "application/json"}
+            "body": json.dumps({"error": "Missing required fields"})
         }
 
-    # Si tu considères que le path audio est obligatoire (recommandé) :
-    if not audio_s3_key:
-        return {
-            "statusCode": 400,
-            "body": json.dumps({"error": "audioS3Key is required"}),
-            "headers": {"Content-Type": "application/json"}
+    # Generate track ID
+    track_id = str(uuid.uuid4())
+
+    # Object key inside S3
+    object_key = f"tracks/{track_id}.mp3"
+
+    # Write metadata in DynamoDB
+    table.put_item(
+        Item={
+            "PK": f"TRACK#{track_id}",
+            "SK": "METADATA",
+            "title": title,
+            "artist": artist,
+            "duration": duration,
+            "objectKey": object_key,
+            "status": "UPLOADING",
+            "plays": 0,
+            "createdAt": datetime.utcnow().isoformat() + "Z"
         }
+    )
 
-    pk = f"TRACK#{track_id}"
-    sk = "METADATA"
-
-    try:
-        table.put_item(
-            Item={
-                "PK": pk,
-                "SK": sk,
-                "trackId": track_id,
-                "title": title,
-                "artist": artist,
-                "plays": 0,
-                "audioS3Key": audio_s3_key,
-                "createdAt": datetime.utcnow().isoformat() + "Z"
-            },
-            ConditionExpression="attribute_not_exists(PK)"
-        )
-
-    except ClientError as e:
-        if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
-            # Le track existe déjà
-            return {
-                "statusCode": 409,
-                "body": json.dumps({"error": "Track already exists"}),
-                "headers": {"Content-Type": "application/json"}
-            }
-        # Autre erreur Dynamo → on laisse remonter pour qu'elle soit loggée
-        raise
+    # Generate presigned PUT URL
+    upload_url = s3.generate_presigned_url(
+        ClientMethod="put_object",
+        Params={
+            "Bucket": BUCKET_NAME,
+            "Key": object_key,
+            "ContentType": "audio/mpeg"
+        },
+        ExpiresIn=300  # 5 minutes
+    )
 
     return {
         "statusCode": 201,
         "body": json.dumps({
             "trackId": track_id,
-            "message": "Track created"
-        }),
-        "headers": {"Content-Type": "application/json"}
+            "uploadUrl": upload_url
+        })
     }
