@@ -35,3 +35,8 @@ output "opensearch_domain" {
 output "cognito_idp" {
   value = module.cognito.cognito_oidc_issuer
 }
+
+
+output "cognito_client_id" {
+  value = module.cognito.client_id
+}
