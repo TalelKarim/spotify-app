@@ -3,6 +3,10 @@ variable "env" {
 }
 
 
+variable "region" {
+  
+}
+
 variable "callback_urls" {
   type = list(string)
 }

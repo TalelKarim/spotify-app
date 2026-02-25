@@ -30,3 +30,8 @@ output "COGNITO_USER_POOLS" {
 output "opensearch_domain" {
   value = module.opensearch.domain_endpoint
 }
+
+
+output "cognito_idp" {
+  value = module.cognito.cognito_oidc_issuer
+}
