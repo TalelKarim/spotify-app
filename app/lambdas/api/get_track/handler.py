@@ -1,28 +1,17 @@
 import os
 import boto3
 import json
-from decimal import Decimal
 
 dynamodb = boto3.resource("dynamodb")
+
 TABLE_NAME = os.environ["TRACKS_TABLE"]
+CLOUDFRONT_DOMAIN = os.environ["CLOUDFRONT_DOMAIN"]
+
 table = dynamodb.Table(TABLE_NAME)
 
 
-def decimal_to_native(obj):
-    if isinstance(obj, Decimal):
-        if obj % 1 == 0:
-            return int(obj)
-        else:
-            return float(obj)
-    if isinstance(obj, list):
-        return [decimal_to_native(x) for x in obj]
-    if isinstance(obj, dict):
-        return {k: decimal_to_native(v) for k, v in obj.items()}
-    return obj
-
-
 def main(event, context):
-    # pathParameters.trackId vient d'API Gateway : /tracks/{trackId}
+
     track_id = event["pathParameters"]["trackId"]
 
     pk = f"TRACK#{track_id}"
@@ -40,26 +29,28 @@ def main(event, context):
     if not item:
         return {
             "statusCode": 404,
-            "body": json.dumps({"error": "Track not found"}),
-            "headers": {
-                "Content-Type": "application/json"
-            }
+            "body": json.dumps({"error": "Track not found"})
         }
 
-    # On enlève PK/SK et on convertit les décimaux
-    cleaned = {k: v for k, v in item.items() if k not in ("PK", "SK")}
-    cleaned = decimal_to_native(cleaned)
+    # Bloquer si upload pas terminé
+    if item.get("status") != "READY":
+        return {
+            "statusCode": 409,
+            "body": json.dumps({"error": "Track not ready yet"})
+        }
 
-    # On force trackId cohérent avec l'URL (au cas où)
-    cleaned["trackId"] = track_id
+    object_key = item.get("objectKey")
 
-    # Exemple de champ qui sera présent si tu l'as mis à la création :
-    # cleaned["audioS3Key"]  -> "audio/tracks/track-123.mp3"
+    audio_url = f"https://{CLOUDFRONT_DOMAIN}/{object_key}"
 
     return {
         "statusCode": 200,
-        "body": json.dumps(cleaned),
-        "headers": {
-            "Content-Type": "application/json",
-        },
+        "body": json.dumps({
+            "trackId": track_id,
+            "title": item.get("title"),
+            "artist": item.get("artist"),
+            "duration": item.get("duration"),
+            "plays": item.get("plays", 0),
+            "audioUrl": audio_url
+        })
     }
