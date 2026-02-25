@@ -9,10 +9,10 @@ variable "callback_urls" {
 
 
 variable "logout_urls" {
-  type = string
+  type = list(string)
 }
 
 
 variable "cognito_domain_prefix" {
-  type = string
+  type = list(string)
 }
