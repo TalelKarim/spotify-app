@@ -4,7 +4,7 @@ variable "env" {
 
 
 variable "callback_urls" {
-  type = string
+  type = list(string)
 }
 
 
@@ -14,5 +14,5 @@ variable "logout_urls" {
 
 
 variable "cognito_domain_prefix" {
-  type = list(string)
+  type = string
 }
