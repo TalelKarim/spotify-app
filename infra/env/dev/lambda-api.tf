@@ -18,7 +18,7 @@ locals {
       role = module.iam.lambda_api_role_arn
       env = {
         TRACKS_TABLE = module.dynamodb.tracks_table_name
-        BUCKET_NAME   = module.media.bucket_name
+        BUCKET_NAME  = module.media.bucket_name
       }
     }
 
@@ -109,7 +109,7 @@ module "api_lambdas" {
 
   environment_variables = each.value.env
 
-  layers = contains(["api_search"], each.key)   ? [aws_lambda_layer_version.python_requests.arn] : []
+  layers = contains(["api_search"], each.key) ? [aws_lambda_layer_version.python_requests.arn] : []
 }
 
 

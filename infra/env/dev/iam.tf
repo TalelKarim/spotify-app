@@ -38,4 +38,7 @@ module "iam" {
   }
 
   eventbridge_bus_arn = module.eventbridge_bus.bus_arn
+
+
+  media_bucket_name = module.media.bucket_name
 }

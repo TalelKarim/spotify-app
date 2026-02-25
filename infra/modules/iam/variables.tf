@@ -26,7 +26,7 @@ variable "dynamodb_table_arns" {
 
 
 variable "media_bucket_name" {
- type = string 
+  type = string
 }
 
 

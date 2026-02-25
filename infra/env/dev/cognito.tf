@@ -1,8 +1,8 @@
 module "cognito" {
-  source = "../../modules/cognito"
-  env    = var.env
-  region = var.aws_region
-  callback_urls = [ "http://localhost:5173" ]
-  logout_urls = [ "http://localhost:5173" ]
+  source                = "../../modules/cognito"
+  env                   = var.env
+  region                = var.aws_region
+  callback_urls         = ["http://localhost:5173"]
+  logout_urls           = ["http://localhost:5173"]
   cognito_domain_prefix = "spotify-${var.env}"
 }
