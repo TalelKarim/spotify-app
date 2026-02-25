@@ -1,5 +1,5 @@
 module "media" {
-  source = "../../modules/media"
+  source = "../../modules/media-tracks"
 
   env         = var.env
   project     = "spotify-app"
