@@ -3,5 +3,5 @@ module "media" {
 
   env         = var.env
   project     = "spotify-app"
-  kms_key_arn = module.kms.key_arn
+  kms_key_arn = module.kms.kms_key_arn
 }
