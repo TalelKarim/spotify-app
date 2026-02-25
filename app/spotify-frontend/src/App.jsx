@@ -1,17 +1,35 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route } from "react-router-dom"
+import ProtectedRoute from "./components/ProtectedRoute"
+import MainLayout from "./layout/MainLayout"
+import Dashboard from "./pages/Dashboard"
+import Search from "./pages/Search"
+import Analytics from "./pages/Analytics"
+import Profile from "./pages/Profile"
+import AddTrack from "./pages/AddTracks"
 
 function App() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <h1 className="text-4xl font-bold text-green-600">
-        Spotify Frontend Ready
-      </h1>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route
+          path="/*"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/search" element={<Search />} />
+                  <Route path="/analytics" element={<Analytics />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/add-track" element={<AddTrack />} />
+                </Routes>
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
 export default App
-
