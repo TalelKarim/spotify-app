@@ -1,0 +1,17 @@
+variable "env" {
+  type = string
+}
+
+variable "project" {
+  type    = string
+  default = "spotify-app"
+}
+
+variable "kms_key_arn" {
+  type = string
+}
+
+variable "price_class" {
+  type    = string
+  default = "PriceClass_100"
+}

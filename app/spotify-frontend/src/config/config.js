@@ -1,3 +1,3 @@
 export const config = {
-   apiBaseUrl : "https://i9m1tbyg57.execute-api.eu-west-1.amazonaws.com/dev"
+   apiBaseUrl : "https://uh5xnb6u8j.execute-api.eu-west-1.amazonaws.com/dev"
 }

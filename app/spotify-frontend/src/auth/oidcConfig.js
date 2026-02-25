@@ -1,6 +1,6 @@
 export const oidcConfig = {
   authority: "https://cognito-idp.eu-west-1.amazonaws.com/eu-west-1_t6Hqh46nS",
-  client_id: "4nkq725188sudjg6n9ndr8m09e",
+  client_id: "m1nsjbsdvjuhiab3eikcrbrj9",
   redirect_uri: "http://localhost:5173",
   response_type: "code",
   scope: "openid email profile",
