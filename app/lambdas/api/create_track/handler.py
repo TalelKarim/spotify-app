@@ -5,6 +5,9 @@ import boto3
 from botocore.config import Config
 from datetime import datetime
 
+
+import time 
+
 REGION = os.environ.get("AWS_REGION", "eu-west-1")
 
 dynamodb = boto3.resource("dynamodb")
@@ -46,6 +49,9 @@ def main(event, context):
     # Object key inside S3
     object_key = f"tracks/{track_id}.mp3"
 
+
+    upload_expiration = int(time.time()) + (15 * 60)
+
     # Write metadata in DynamoDB
     table.put_item(
         Item={
@@ -58,6 +64,7 @@ def main(event, context):
             "status": "UPLOADING",
             "plays": 0,
             "createdAt": datetime.utcnow().isoformat() + "Z"
+            "uploadExpiresAt": upload_expiration
         }
     )
 
