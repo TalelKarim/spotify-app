@@ -63,7 +63,7 @@ def main(event, context):
             "objectKey": object_key,
             "status": "UPLOADING",
             "plays": 0,
-            "createdAt": datetime.utcnow().isoformat() + "Z"
+            "createdAt": datetime.utcnow().isoformat() + "Z",
             "uploadExpiresAt": upload_expiration
         }
     )
