@@ -2,11 +2,18 @@ import json
 import os
 import uuid
 import boto3
+from botocore.config import Config
 from datetime import datetime
 
-dynamodb = boto3.resource("dynamodb")
-s3 = boto3.client("s3")
+REGION = os.environ.get("AWS_REGION", "eu-west-1")
 
+dynamodb = boto3.resource("dynamodb")
+
+s3 = boto3.client(
+    "s3",
+    region_name=REGION,
+    config=Config(signature_version="s3v4")
+)
 TABLE_NAME = os.environ["TRACKS_TABLE"]
 BUCKET_NAME = os.environ["TRACKS_BUCKET"]
 

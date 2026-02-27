@@ -1,2 +1,4 @@
 node_modules/
 .terraform/
+test.mp3
+local_test.md
