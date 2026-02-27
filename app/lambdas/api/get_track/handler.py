@@ -1,18 +1,44 @@
 import os
 import boto3
 import json
+from decimal import Decimal
 
 dynamodb = boto3.resource("dynamodb")
 
 TABLE_NAME = os.environ["TRACKS_TABLE"]
-CLOUDFRONT_DOMAIN = os.environ["CLOUDFRONT_DOMAIN"]
+CLOUDFRONT_DOMAIN = os.environ.get("CLOUDFRONT_DOMAIN", "")
 
 table = dynamodb.Table(TABLE_NAME)
 
 
+# 🔹 Conversion DynamoDB Decimal → int / float
+def decimal_to_native(obj):
+    if isinstance(obj, Decimal):
+        # Si c'est un entier
+        if obj % 1 == 0:
+            return int(obj)
+        return float(obj)
+
+    if isinstance(obj, list):
+        return [decimal_to_native(x) for x in obj]
+
+    if isinstance(obj, dict):
+        return {k: decimal_to_native(v) for k, v in obj.items()}
+
+    return obj
+
+
 def main(event, context):
 
-    track_id = event["pathParameters"]["trackId"]
+    path_params = event.get("pathParameters") or {}
+    track_id = path_params.get("trackId")
+
+    if not track_id:
+        return {
+            "statusCode": 400,
+            "body": json.dumps({"error": "Missing trackId"}),
+            "headers": {"Content-Type": "application/json"}
+        }
 
     pk = f"TRACK#{track_id}"
     sk = "METADATA"
@@ -29,17 +55,29 @@ def main(event, context):
     if not item:
         return {
             "statusCode": 404,
-            "body": json.dumps({"error": "Track not found"})
+            "body": json.dumps({"error": "Track not found"}),
+            "headers": {"Content-Type": "application/json"}
         }
 
-    # Bloquer si upload pas terminé
+    # 🔹 Convert Decimal → native types
+    item = decimal_to_native(item)
+
+    # 🔹 Bloquer si upload pas terminé
     if item.get("status") != "READY":
         return {
             "statusCode": 409,
-            "body": json.dumps({"error": "Track not ready yet"})
+            "body": json.dumps({"error": "Track not ready yet"}),
+            "headers": {"Content-Type": "application/json"}
         }
 
     object_key = item.get("objectKey")
+
+    if not object_key:
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"error": "Missing object key"}),
+            "headers": {"Content-Type": "application/json"}
+        }
 
     audio_url = f"https://{CLOUDFRONT_DOMAIN}/{object_key}"
 
@@ -52,5 +90,8 @@ def main(event, context):
             "duration": item.get("duration"),
             "plays": item.get("plays", 0),
             "audioUrl": audio_url
-        })
+        }),
+        "headers": {
+            "Content-Type": "application/json"
+        }
     }
