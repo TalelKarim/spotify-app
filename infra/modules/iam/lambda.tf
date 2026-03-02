@@ -208,10 +208,13 @@ resource "aws_iam_policy" "lambda_api_dynamodb" {
         "dynamodb:PutItem",
         "dynamodb:UpdateItem"
       ]
-      Resource = [
+      Resource = concat(
         var.dynamodb_table_arns.api,
-        "${var.dynamodb_table_arns.api}/index/*"
-      ]
+        [
+          for arn in var.dynamodb_table_arns.api :
+          "${arn}/index/*"
+        ]
+      )
     }]
   })
 }
