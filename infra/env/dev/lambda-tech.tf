@@ -16,7 +16,7 @@ locals {
       vpc_enabled = true
     }
 
-    show_index_opensearch = {
+    tech_show_index_opensearch = {
       role = module.iam.lambda_tech_role_arn
       env = {
         OPENSEARCH_ENDPOINT = module.opensearch.domain_endpoint
