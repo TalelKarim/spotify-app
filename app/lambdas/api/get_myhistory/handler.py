@@ -74,9 +74,19 @@ def main(event, context):
 
     items = [decimal_to_native(item) for item in resp.get("Items", [])]
 
+
+    clean_items = []
+
+    for item in items:
+            clean_items.append({
+                "trackId": item["PK"].replace("TRACK#", ""),
+                "playedAt": item["SK"].replace("TS#", ""),
+                "metadata": item.get("metadata", {})
+            })
+
     body = {
         "userId": user_id,
-        "items": items,
+        "items": clean_items,
     }
 
     return {
