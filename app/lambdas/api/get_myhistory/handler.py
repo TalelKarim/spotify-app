@@ -65,9 +65,10 @@ def main(event, context):
     pk = f"USER#{user_id}"
 
     resp = table.query(
-        KeyConditionExpression="PK = :pk",
+        IndexName="GSI1",
+        KeyConditionExpression="GSI1PK = :pk",
         ExpressionAttributeValues={":pk": pk},
-        ScanIndexForward=False,  # plus récents d'abord
+        ScanIndexForward=False,
         Limit=limit,
     )
 

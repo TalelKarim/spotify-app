@@ -32,6 +32,10 @@ def main(event, context):
             "SK": sk,
             "userId": user_id,
             "eventType": detail["eventType"],
+            # Global secondary index
+            "GSI1PK": f"USER#{user_id}",
+            "GSI1SK": f"TS#{timestamp}",
+
             "source": detail["source"],
             "metadata": detail.get("metadata", {}),
             "createdAt": datetime.utcnow().isoformat() + "Z"
