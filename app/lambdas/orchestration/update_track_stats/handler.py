@@ -2,6 +2,10 @@ import os
 import boto3
 from datetime import datetime
 
+from botocore.exceptions import ClientError
+
+
+
 dynamodb = boto3.resource("dynamodb")
 TABLE_NAME = os.environ["TRACKS_TABLE"]
 table = dynamodb.Table(TABLE_NAME)

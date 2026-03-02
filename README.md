@@ -55,156 +55,190 @@ ingestion
 
 re-indexation
 
-4. Use cases fonctionnels
 
-UC-01 — Consulter les métadonnées d’un track
 
-L’utilisateur récupère les informations d’un morceau (titre, artiste, durée, etc.).
 
+1) Use cases complets du projet Spotify
 
-UC-02 — Démarrer l’écoute d’un track
 
-L’utilisateur clique sur “Play”.
-Le backend vérifie les droits et retourne une URL CloudFront signée.
-Le streaming est effectué directement depuis le CDN.
+A. Auth & identité
 
-UC-03 — Enregistrer une écoute
+    UC-A1 : Login / Logout (Cognito Hosted UI + PKCE)
 
-Chaque écoute génère un événement métier TrackPlayed, traité de manière asynchrone.
+    UC-A2 : Récupérer mon profil (GET /me)
 
-UC-04 — Mettre à jour les statistiques
+    UC-A3 : RBAC simple : USER vs ADMIN
 
-Les statistiques d’écoute (track, utilisateur) sont mises à jour sans impacter l’utilisateur.
 
-UC-05 — Notifications (future extension)
 
-Possibilité de notifier l’utilisateur ou des systèmes tiers.
+B. Catalogue tracks (métadonnées + media)
 
-UC-06 — Recherche de contenu
+    UC-B1 (ADMIN) : Créer un track (métadonnées) + obtenir presigned upload URL
 
-Recherche textuelle sur les tracks via un moteur d’indexation.
+    UC-B2 (ADMIN) : Upload MP3 sur S3 via presigned URL
 
-UC-07 — Opérations techniques
+    UC-B3 (Système) : S3 Event → valider upload → passer track à READY
 
-Ingestion de données audio, re-indexation, maintenance.
+    UC-B4 (USER) : Lister tracks
 
+    UC-B5 (USER) : Get track details (inclut audioUrl CloudFront)
 
+    UC-B6 (USER) : Jouer un track (POST /tracks/{id}/play)
 
 
+C. Listening events (événement métier)
 
-# modele de donnée 
+    UC-C1 : Enregistrer un “TrackPlayed event” (source API)
 
+    UC-C2 : Stocker l’événement brut dans listening-events (audit trail)
 
+    UC-C3 : Orchestrer des traitements dérivés (stats track, stats user, analytics global)
 
 
-🟢 TABLE: tracks
+D. Analytics & stats
 
+    UC-D1 : Get analytics global (GET /analytics/global) — ex “daily plays”
 
-🎵 1️⃣ Track Metadata
+    UC-D2 : Get stats user (GET /users/{userId} ou idéalement /users/me/stats)
 
+    UC-D3 : Get stats track (GET /tracks/{id} renvoie déjà plays / lastPlayedAt)
 
-PK = TRACK#{trackId}
-SK = METADATA
+    UC-D4 : (option) Analytics par jour / range (GET /analytics/daily?from=&to=)
 
-Attributes
+E. Search / Indexation (tech)
 
-{
-  "PK": "TRACK#track-123",
-  "SK": "METADATA",
-  "title": "My Song",
-  "artist": "Artist Name",
-  "genre": "Pop",
-  "duration": 210,
-  "createdAt": "...",
-  "plays": 0,
-  "lastPlayedAt": null
-}
+    UC-E1 : Indexer un track à la création/READY dans OpenSearch
 
+    UC-E2 : Indexer/mettre à jour stats (plays) côté index (optionnel)
 
-🟢 TABLE: users
+    UC-E3 : Rechercher (GET /search?q=...) via OpenSearch
 
-👤 1️⃣ User Metadata
+2) Contrats API finaux (côté API Gateway)
+Auth (protégées par Cognito)
 
-PK = USER#{userId}
-SK = METADATA
+GET /me ✅ (USER/ADMIN).      x 
 
+POST /tracks/{trackId}/play ✅ (USER/ADMIN).  
 
+POST /events/listening ✅ (USER/ADMIN) (si on garde cette route)
 
-Attributes 
 
-{
-  "PK": "USER#user-456",
-  "SK": "METADATA",
-  "email": "...",
-  "createdAt": "...",
-  "totalPlays": 0,
-  "lastPlayedTrack": null
-}
 
+Admin-only
 
+POST /tracks ✅ ADMIN.        x 
 
+PUT /tracks/{id} ✅ ADMIN.    
 
-🟢 TABLE: listening_events
+DELETE /tracks/{id} ✅ ADMIN
 
-🎧 1️⃣ Event brut (historique)
-PK = TRACK#{trackId}
-SK = TS#{timestamp}
 
+Public/Anonymous (à décider)
 
+GET /tracks 
 
-{
-  "PK": "TRACK#track-123",
-  "SK": "TS#2026-02-10T18:22:00Z",
-  "userId": "user-456",
-  "eventType": "TrackPlayed",
-  "source": "api",
-  "metadata": { ... },
-  "createdAt": "..."
-}
+GET /tracks/{id}
 
+GET /search
 
+GET /analytics/global 
 
-📅 2️⃣ Analytics global journalier
-PK = ANALYTICS#GLOBAL
-SK = DATE#2026-02-10
 
 
-{
-  "PK": "ANALYTICS#GLOBAL",
-  "SK": "DATE#2026-02-10",
-  "dailyPlays": 1532
-}
 
+Event contract (le contrat le plus important)
+EventBridge “TrackPlayed”
 
+DetailType: TrackPlayed
+Source: spotify.api
+Detail:
 
+  {
+    "eventType": "TrackPlayed",
+    "trackId": "track-123",
+    "userId": "cognito-sub-or-userid",
+    "timestamp": "2026-02-27T19:00:00Z",
+    "source": "api",
+    "metadata": {
+      "device": "mobile",
+      "country": "FR"
+    }
+  }
 
 
 
-# Schéma d'APIS
 
-1- GET /me.    ------> Lambda api_get_me.  ------> Table users
+Lambdas
 
-2- GET /me/listening/history  ----> Lambda api_get_my_history ----> Table Listening events 
 
-3- GET /tracks.  ------> Lambda api_get_tracks ----> Table tracks
+API Lambdas
 
+- api_create_track (ADMIN)
 
-4- GET /tracks/{trackId} -----> Lambda api_get_tracks ----> Table tracks
+    écrit DynamoDB track METADATA (status=UPLOADING, objectKey, TTL upload)
 
+    génère presigned PUT URL S3 (KMS compatible)
 
-5- GET /tracks/{trackId}/stats ----> Lambda api_get_track_stats -----> listening-events
+- api_get_tracks
 
+    scan/pagination
 
+    renvoie audioUrl basé sur CloudFront + objectKey (si READY)
 
-6- POST /tracks/{trackId}/play  ----> Lambda api_start_stream ----> tracks
+- api_get_track
 
+    get_item
 
-7- POST /events/listening ----> Lambda api_store_listening_event ---> /events/listening
+    bloque si status != READY (409)
 
-9 GET /health -----> lambda api_get_health 
+    renvoie audioUrl
 
+- api_start_stream (protégée)
 
+    lit sub depuis JWT (authorizer claims)
 
+    publie event EventBridge TrackPlayed
 
+    renvoie 202
 
 
+- api_get_me
+
+    renvoie identity depuis claims
+
+- api_search
+
+  query OpenSearch
+
+
+
+
+Orchestration Lambdas (utilisées par Step Functions)
+
+- orch_update_track_stats
+
+  increment plays + lastPlayedAt (ConditionExpression track exists)
+
+- Orch_update_user_stats
+
+ update “user aggregate” (totalPlays, lastPlayedTrack, etc.)
+
+- orch_compute_analytics
+
+  update “global daily analytics” (par date)
+
+
+
+Tech / Indexing Lambdas
+
+- process_track_upload (trigger S3)
+
+    passe status=READY
+
+    publie un event “TrackReady” pour indexation
+
+- index_track (trigger TrackReady / EventBridge / SQS)
+
+    upsert doc OpenSearch (title, artist, duration, trackId, maybe plays)
+
+    Important : plays qui bougent souvent = pas obligé de les réindexer à chaque play (coût). On peut garder OpenSearch pour search “catalogue”, et Dynamo pour stats.

@@ -1,5 +1,6 @@
 import os
 import boto3
+from botocore.exceptions import ClientError
 
 dynamodb = boto3.resource("dynamodb")
 TABLE_NAME = os.environ["USERS_TABLE"]
@@ -14,6 +15,7 @@ def main(event, context):
 
     pk = f"USER#{user_id}"
     sk = "METADATA"
+
     try:
         table.update_item(
             Key={
@@ -27,13 +29,10 @@ def main(event, context):
             ExpressionAttributeValues={
                 ":inc": 1,
                 ":track": track_id
-            },
-            ConditionExpression="attribute_exists(PK)"
-
+            }
         )
 
     except ClientError as e:
-        if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
-            raise Exception("User does not exist")
-        raise    
+        raise
+
     return {"status": "user_stats_updated"}
