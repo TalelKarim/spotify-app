@@ -16,22 +16,22 @@ resource "aws_kms_key" "main" {
         Resource = "*"
       },
       {
-    Sid    = "AllowCloudFrontDecrypt"
-    Effect = "Allow"
-    Principal = {
-      Service = "cloudfront.amazonaws.com"
-    }
-    Action = [
-      "kms:Decrypt",
-      "kms:GenerateDataKey"
-    ]
-    Resource = "*"
-    Condition = {
-      StringEquals = {
-        "AWS:SourceArn" = var.media_cloudfront_distribution_arn
+        Sid    = "AllowCloudFrontDecrypt"
+        Effect = "Allow"
+        Principal = {
+          Service = "cloudfront.amazonaws.com"
+        }
+        Action = [
+          "kms:Decrypt",
+          "kms:GenerateDataKey"
+        ]
+        Resource = "*"
+        Condition = {
+          StringEquals = {
+            "AWS:SourceArn" = var.media_cloudfront_distribution_arn
+          }
+        }
       }
-    }
-  }
 
 
     ]

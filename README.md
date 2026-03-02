@@ -118,7 +118,7 @@ Auth (protégées par Cognito)
 
 GET /me ✅ (USER/ADMIN).      x 
 
-POST /tracks/{trackId}/play ✅ (USER/ADMIN).  
+POST /tracks/{trackId}/play ✅ (USER/ADMIN).        x 
 
 POST /events/listening ✅ (USER/ADMIN) (si on garde cette route)
 
@@ -135,9 +135,13 @@ DELETE /tracks/{id} ✅ ADMIN
 
 Public/Anonymous (à décider)
 
-GET /tracks 
+GET /tracks  x
 
-GET /tracks/{id}
+GET /tracks/{id} x 
+
+GET /tracks/{id}/stats x 
+
+
 
 GET /search
 

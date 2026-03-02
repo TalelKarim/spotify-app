@@ -21,9 +21,16 @@ def main(event, context):
 
     table.update_item(
         Key={"PK": pk, "SK": sk},
-        UpdateExpression="SET #status = :ready",
-        ExpressionAttributeNames={"#status": "status"},
-        ExpressionAttributeValues={":ready": "READY"}
+        UpdateExpression="""
+            SET #status = :ready
+            REMOVE uploadExpiresAt
+        """,
+        ExpressionAttributeNames={
+            "#status": "status"
+        },
+        ExpressionAttributeValues={
+            ":ready": "READY"
+        }
     )
 
     return {"status": "updated"}

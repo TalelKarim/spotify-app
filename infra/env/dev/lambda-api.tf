@@ -3,7 +3,7 @@ locals {
     api_get_track = {
       role = module.iam.lambda_api_role_arn
       env = {
-        TRACKS_TABLE = module.dynamodb.tracks_table_name
+        TRACKS_TABLE      = module.dynamodb.tracks_table_name
         CLOUDFRONT_DOMAIN = module.media.cloudfront_domain
       }
     }
@@ -12,15 +12,15 @@ locals {
       role = module.iam.lambda_api_role_arn
       env = {
         TRACKS_TABLE = module.dynamodb.tracks_table_name
-     
+
       }
     }
 
     api_create_track = {
       role = module.iam.lambda_api_role_arn
       env = {
-        TRACKS_TABLE = module.dynamodb.tracks_table_name
-        TRACKS_BUCKET  = module.media.bucket_name
+        TRACKS_TABLE  = module.dynamodb.tracks_table_name
+        TRACKS_BUCKET = module.media.bucket_name
       }
     }
 
