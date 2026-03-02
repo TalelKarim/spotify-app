@@ -19,7 +19,7 @@ locals {
     orch_compute_analytics = {
       role = module.iam.lambda_step_functions_role_arn
       env = {
-        LISTENING_EVENTS_TABLE = module.dynamodb.listening_events_table_name
+        ANALYTICS_TABLE = module.dynamodb.analytics_table_name
       }
     }
   }
