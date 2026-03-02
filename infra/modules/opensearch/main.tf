@@ -1,7 +1,5 @@
 data "aws_caller_identity" "current" {}
-
 data "aws_region" "current" {}
-
 
 resource "aws_iam_service_linked_role" "opensearch" {
   aws_service_name = "es.amazonaws.com"
@@ -10,31 +8,6 @@ resource "aws_iam_service_linked_role" "opensearch" {
   lifecycle {
     ignore_changes = [description]
   }
-}
-
-resource "aws_security_group" "opensearch" {
-  name        = "${var.domain_name}-sg"
-  description = "Security group for OpenSearch domain ${var.domain_name}"
-  vpc_id      = var.vpc_id
-
-  ingress {
-    description = "HTTPS from VPC"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = var.allowed_cidr_blocks
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = merge(var.tags, {
-    Name = "${var.domain_name}-sg"
-  })
 }
 
 resource "aws_cloudwatch_log_group" "index_slow" {
@@ -69,7 +42,6 @@ resource "aws_cloudwatch_log_resource_policy" "opensearch_logs" {
   })
 }
 
-
 resource "aws_opensearch_domain" "this" {
   depends_on = [aws_iam_service_linked_role.opensearch]
 
@@ -79,18 +51,7 @@ resource "aws_opensearch_domain" "this" {
   cluster_config {
     instance_type  = var.instance_type
     instance_count = var.instance_count
-
-    # On part du principe qu’on a au moins 2 subnets (2 AZ)
     zone_awareness_enabled = false
-
-    # zone_awareness_config {
-    #   availability_zone_count = 2
-    # }
-  }
-
-  vpc_options {
-    subnet_ids         = var.subnet_ids
-    security_group_ids = [aws_security_group.opensearch.id]
   }
 
   ebs_options {
@@ -118,15 +79,14 @@ resource "aws_opensearch_domain" "this" {
     enabled                  = true
   }
 
+  # 🔥 PUBLIC ACCESS POLICY (OUVERT)
   access_policies = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
         Effect = "Allow"
-        Principal = {
-          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
-        }
-        Action   = "es:*"
+        Principal = "*"
+        Action   = "es:ESHttp*"
         Resource = "arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/${var.domain_name}/*"
       }
     ]

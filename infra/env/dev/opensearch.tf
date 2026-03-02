@@ -6,13 +6,7 @@ module "opensearch" {
   domain_name    = "spotify-dev-search"
   engine_version = "OpenSearch_2.11"
 
-  # VPC / subnets : on réutilise ton module vpc
-  vpc_id     = module.vpc.vpc_id
-  subnet_ids = [module.vpc.private_subnets_ids[0]]
 
-  # Pour l’instant : on autorise tout le CIDR du VPC à parler à OS
-  # (plus tard on restreindra au SG des Lambdas)
-  allowed_cidr_blocks = [var.vpc_cidr]
 
   # Profil low-cost pour lab
   instance_type   = "t3.small.search"

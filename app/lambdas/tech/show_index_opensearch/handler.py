@@ -17,6 +17,9 @@ awsauth = AWS4Auth(
 
 endpoint = os.environ["OPENSEARCH_ENDPOINT"]
 
+if not endpoint.startswith("http"):
+    endpoint = f"https://{endpoint}"
+    
 def main(event, context):
     r = requests.get(f"{endpoint}/_cat/indices?v", auth=awsauth)
     return {"statusCode": 200, "body": r.text}

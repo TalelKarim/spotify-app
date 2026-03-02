@@ -9,20 +9,6 @@ variable "engine_version" {
   default     = "OpenSearch_2.11"
 }
 
-variable "vpc_id" {
-  description = "ID du VPC où déployer OpenSearch"
-  type        = string
-}
-
-variable "subnet_ids" {
-  description = "Liste des subnets privés pour OpenSearch"
-  type        = list(string)
-}
-
-variable "allowed_cidr_blocks" {
-  description = "CIDR autorisés à accéder à OpenSearch (ingress)"
-  type        = list(string)
-}
 
 variable "instance_type" {
   description = "Type d’instance OpenSearch"
