@@ -48,6 +48,9 @@ api_start_stream:api/start_stream
 api_post_listening_event:api/post_listening_event
 api_search:api/search
 
+
+
+
 event_store_listening_event:events/store_listening_event
 event_update_track_stats:events/update_track_stats
 event_publish_notifications:events/publish_notifications
@@ -58,6 +61,7 @@ orch_compute_analytics:orchestration/compute_analytics
 
 tech_ingest_audio_metadata:tech/ingest_audio_metadata
 tech_reindex_opensearch:tech/reindex_opensearch
+tech_show_index_opensearch:tech/show_index_opensearch
 "
 
 # ---------------------------------

@@ -15,6 +15,14 @@ locals {
       }
       vpc_enabled = true
     }
+
+    show_index_opensearch = {
+      role = module.iam.lambda_tech_role_arn
+      env = {
+        OPENSEARCH_ENDPOINT = module.opensearch.domain_endpoint
+      }
+      vpc_enabled = true
+    }
   }
 
   tracks_stream_arn = module.dynamodb.tracks_table_stream_arn
