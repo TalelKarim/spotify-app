@@ -64,6 +64,18 @@ resource "aws_opensearch_domain" "this" {
     enabled = true
   }
 
+
+
+  advanced_security_options {
+  enabled                        = true
+  internal_user_database_enabled = true
+
+  master_user_options {
+    master_user_name     = "admin"
+    master_user_password = "SuperPassword123!"
+  }
+}
+
   node_to_node_encryption {
     enabled = true
   }
