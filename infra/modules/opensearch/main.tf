@@ -85,7 +85,9 @@ resource "aws_opensearch_domain" "this" {
     Statement = [
       {
         Effect = "Allow"
-        Principal = "*"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
         Action   = "es:ESHttp*"
         Resource = "arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/${var.domain_name}/*"
       }
