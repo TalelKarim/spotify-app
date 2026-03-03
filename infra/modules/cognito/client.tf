@@ -9,6 +9,14 @@ resource "aws_cognito_user_pool_client" "this" {
     "ALLOW_REFRESH_TOKEN_AUTH"
   ]
 
+  access_token_validity = 24
+  id_token_validity     = 24
+
+  token_validity_units {
+    access_token = "hours"
+    id_token     = "hours"
+  }
+
 
   allowed_oauth_flows_user_pool_client = true
   allowed_oauth_flows                  = ["code"]
