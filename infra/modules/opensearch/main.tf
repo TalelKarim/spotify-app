@@ -49,8 +49,8 @@ resource "aws_opensearch_domain" "this" {
   engine_version = var.engine_version
 
   cluster_config {
-    instance_type  = var.instance_type
-    instance_count = var.instance_count
+    instance_type          = var.instance_type
+    instance_count         = var.instance_count
     zone_awareness_enabled = false
   }
 
@@ -67,14 +67,14 @@ resource "aws_opensearch_domain" "this" {
 
 
   advanced_security_options {
-  enabled                        = true
-  internal_user_database_enabled = true
+    enabled                        = true
+    internal_user_database_enabled = true
 
-  master_user_options {
-    master_user_name     = "admin"
-    master_user_password = "SuperPassword123!"
+    master_user_options {
+      master_user_name     = "admin"
+      master_user_password = "SuperPassword123!"
+    }
   }
-}
 
   node_to_node_encryption {
     enabled = true
@@ -97,9 +97,7 @@ resource "aws_opensearch_domain" "this" {
     Statement = [
       {
         Effect = "Allow"
-        Principal = {
-          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
-        }
+        Principal = "*"
         Action   = "es:ESHttp*"
         Resource = "arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/${var.domain_name}/*"
       }
