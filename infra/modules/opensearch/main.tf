@@ -42,6 +42,7 @@ curl -s -u $AUTH \
       "allowed_actions": [
               "read",
               "search",
+              "write",
               "index",
               "create",
               "update",
