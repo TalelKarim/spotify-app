@@ -40,8 +40,7 @@ curl -s -u $AUTH \
     "index_permissions": [{
       "index_patterns": ["tracks*"],
       "allowed_actions": [
-        "read",
-        "search"
+              "crud"
       ]
     }]
   }'
@@ -64,6 +63,10 @@ curl -s -u $AUTH \
   -d '{
     "users": ["admin"]
   }'
+
+echo "Waiting security plugin..."
+
+sleep 10
 
 echo "OpenSearch security configured."
 
