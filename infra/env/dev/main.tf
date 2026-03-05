@@ -28,5 +28,7 @@ provider "opensearch" {
   username = "admin"
   password = "SuperPassword123!"
 
+  healthcheck = false
+
 }
 
