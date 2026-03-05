@@ -1,3 +1,10 @@
+resource "aws_cloudwatch_log_group" "this" {
+  name              = "/aws/lambda/${aws_lambda_function.this.function_name}"
+  retention_in_days = var.log_retention_days
+}
+
+
+
 resource "aws_lambda_function" "this" {
   function_name = var.function_name
   role          = var.role_arn

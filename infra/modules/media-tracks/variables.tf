@@ -20,3 +20,9 @@ variable "price_class" {
 variable "process_upload_lambda_arn" {
   type = string
 }
+
+
+variable "force_destroy" {
+  type    = bool
+  default = true
+}

@@ -96,10 +96,10 @@ resource "aws_opensearch_domain" "this" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect = "Allow"
+        Effect    = "Allow"
         Principal = "*"
-        Action   = "es:ESHttp*"
-        Resource = "arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/${var.domain_name}/*"
+        Action    = "es:ESHttp*"
+        Resource  = "arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/${var.domain_name}/*"
       }
     ]
   })

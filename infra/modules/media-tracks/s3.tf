@@ -1,6 +1,6 @@
 resource "aws_s3_bucket" "tracks" {
-  bucket = "${var.project}-${var.env}-tracks"
-
+  bucket        = "${var.project}-${var.env}-tracks"
+  force_destroy = var.force_destroy
   tags = {
     Environment = var.env
     Project     = var.project

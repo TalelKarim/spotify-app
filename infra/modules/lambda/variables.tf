@@ -70,3 +70,11 @@ variable "layers" {
   type        = list(string)
   default     = []
 }
+
+
+
+
+variable "log_retention_days" {
+  type    = number
+  default = 1
+}
