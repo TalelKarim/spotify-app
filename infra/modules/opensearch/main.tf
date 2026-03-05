@@ -40,7 +40,13 @@ curl -s -u $AUTH \
     "index_permissions": [{
       "index_patterns": ["tracks*"],
       "allowed_actions": [
-              "crud"
+              "read",
+              "search",
+              "index",
+              "create",
+              "update",
+              "delete",
+              "bulk"
       ]
     }]
   }'
