@@ -52,7 +52,8 @@ curl -s -u $AUTH \
   -H "Content-Type: application/json" \
   -X PUT "$ENDPOINT/_plugins/_security/api/rolesmapping/tracks_api_role" \
   -d '{
-    "backend_roles": ${var.lambda_opensearch_roles}
+    "backend_roles":["${var.tech_role}","${var.api_role}"]
+
   }'
 
 echo "Ensuring admin mapping..."

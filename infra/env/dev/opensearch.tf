@@ -14,8 +14,9 @@ module "opensearch" {
   instance_count  = 1  
   ebs_volume_size = 10 
 
+  tech_role   =  module.iam.lambda_tech_role_arn
+  api_role = module.iam.lambda_api_role_arn,
 
-   lambda_opensearch_roles  = [ module.iam.lambda_api_role_arn, module.iam.lambda_tech_role_arn ]
   tags = {
     Project     = "spotify-app"
     Environment = var.env

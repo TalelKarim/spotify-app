@@ -37,8 +37,12 @@ variable "tags" {
 }
 
 
-variable "lambda_opensearch_roles" {
-  type = list(string)
+variable "tech_role" {
+  type = string
+}
+
+variable "api_role" {
+  type = string
 }
 
 variable "master_password" {
