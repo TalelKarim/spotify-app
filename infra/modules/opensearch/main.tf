@@ -8,7 +8,7 @@ resource "null_resource" "opensearch_lambda_role_mapping" {
 
   provisioner "local-exec" {
     command = <<EOT
-curl -X PUT "https://${aws_opensearch_domain.search.endpoint}/_plugins/_security/api/rolesmapping/all_access" \
+curl -X PUT "https://${aws_opensearch_domain.this.endpoint}/_plugins/_security/api/rolesmapping/all_access" \
 -u admin:SuperPassword123! \
 -H "Content-Type: application/json" \
 -d '{
