@@ -25,7 +25,7 @@ module "opensearch" {
 
 module "opensearch_security" {
 
-  source = "./modules/opensearch_security"
+  source = "../../modules/opensearch_security"
 
   backend_roles = [ module.iam.lambda_api_role_arn, module.iam.lambda_tech_role_arn ]
 
