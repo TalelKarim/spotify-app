@@ -9,10 +9,9 @@ resource "null_resource" "configure_opensearch_security" {
   depends_on = [
     aws_opensearch_domain.this
   ]
+provisioner "local-exec" {
 
-  provisioner "local-exec" {
-
-    command = <<EOT
+  command = <<EOT
 
 set -e
 
@@ -30,45 +29,17 @@ for i in {1..30}; do
   sleep 10
 done
 
-echo "Creating role tracks_api_role..."
-
-curl -s -u $AUTH \
-  -H "Content-Type: application/json" \
-  -X PUT "$ENDPOINT/_plugins/_security/api/roles/tracks_api_role" \
-  -d '{
-    "cluster_permissions": [],
-    "index_permissions": [{
-      "index_patterns": ["tracks*"],
-      "allowed_actions": [
-              "read",
-              "search",
-              "write",
-              "index",
-              "create",
-              "update",
-              "delete",
-              "bulk"
-      ]
-    }]
-  }'
-
-echo "Mapping lambda role..."
-
-curl -s -u $AUTH \
-  -H "Content-Type: application/json" \
-  -X PUT "$ENDPOINT/_plugins/_security/api/rolesmapping/tracks_api_role" \
-  -d '{
-    "backend_roles":["${var.tech_role}","${var.api_role}"]
-
-  }'
-
-echo "Ensuring admin mapping..."
+echo "Mapping IAM roles to all_access..."
 
 curl -s -u $AUTH \
   -H "Content-Type: application/json" \
   -X PUT "$ENDPOINT/_plugins/_security/api/rolesmapping/all_access" \
   -d '{
-    "users": ["admin"]
+    "users": ["admin"],
+    "backend_roles": [
+      "${var.tech_role}",
+      "${var.api_role}"
+    ]
   }'
 
 echo "Waiting security plugin..."
@@ -78,7 +49,7 @@ sleep 10
 echo "OpenSearch security configured."
 
 EOT
-  }
+}
 
   triggers = {
     # endpoint =  aws_opensearch_domain.this.endpoint
