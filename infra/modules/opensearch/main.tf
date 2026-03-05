@@ -18,10 +18,7 @@ curl -X PUT "https://${aws_opensearch_domain.this.endpoint}/_plugins/_security/a
 }'
 EOT
   }
-
-  depends_on = [
-    aws_opensearch_domain.search
-  ]
+  
 }
 
 
