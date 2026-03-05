@@ -74,7 +74,9 @@ EOT
   }
 
   triggers = {
-    endpoint =  aws_opensearch_domain.this.endpoint
+    # endpoint =  aws_opensearch_domain.this.endpoint
+    always_run = timestamp()
+
   }
 }
 
