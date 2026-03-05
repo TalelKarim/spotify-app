@@ -65,7 +65,7 @@ def main(event, context):
         "query": {
             "bool": {
                 "filter": [
-                    {"term": {"status": "READY"}}
+                    {"term": {"status.keyword": "READY"}}
                 ],
                 "should": [
                     # Exact-ish phrase match boosted
