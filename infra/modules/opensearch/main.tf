@@ -7,7 +7,7 @@ data "aws_region" "current" {}
 resource "null_resource" "configure_opensearch_security" {
 
   depends_on = [
-    aws_opensearch_domain.this.endpoint
+    aws_opensearch_domain.this
   ]
 
   provisioner "local-exec" {
