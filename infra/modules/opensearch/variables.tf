@@ -11,10 +11,14 @@ variable "engine_version" {
 
 
 
-
-variable "lambda_api_role_arn" {
-  type = string
+variable "backend_roles_opensearch" {
+  type = list(string)
 }
+
+
+
+
+
 variable "instance_type" {
   description = "Type d’instance OpenSearch"
   type        = string

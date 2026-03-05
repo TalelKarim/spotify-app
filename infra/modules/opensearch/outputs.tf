@@ -7,3 +7,5 @@ output "domain_endpoint" {
   description = "Endpoint HTTPS du domaine OpenSearch"
   value       = aws_opensearch_domain.this.endpoint
 }
+
+

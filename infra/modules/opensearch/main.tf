@@ -12,13 +12,11 @@ curl -X PUT "https://${aws_opensearch_domain.this.endpoint}/_plugins/_security/a
 -u admin:SuperPassword123! \
 -H "Content-Type: application/json" \
 -d '{
-  "backend_roles": [
-   ${var.lambda_api_role_arn} 
-  ]
+  "backend_roles": ${var.backend_roles_opensearch}
 }'
 EOT
   }
-  
+
 }
 
 
