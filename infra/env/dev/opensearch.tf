@@ -7,7 +7,7 @@ module "opensearch" {
   engine_version = "OpenSearch_2.11"
 
 
-  backend_roles_opensearch = [ module.iam.lambda_api_role_arn, module.iam.lambda_tech_role_arn ]
+
 
   # Profil low-cost pour lab
   instance_type   = "t3.small.search"
@@ -19,4 +19,18 @@ module "opensearch" {
     Environment = var.env
     Terraform   = "true"
   }
+}
+
+
+
+module "opensearch_security" {
+
+  source = "./modules/opensearch_security"
+
+  backend_roles = [ module.iam.lambda_api_role_arn, module.iam.lambda_tech_role_arn ]
+
+
+  depends_on = [
+    module.opensearch
+  ]
 }

@@ -11,13 +11,6 @@ variable "engine_version" {
 
 
 
-variable "backend_roles_opensearch" {
-  type = list(string)
-}
-
-
-
-
 
 variable "instance_type" {
   description = "Type d’instance OpenSearch"

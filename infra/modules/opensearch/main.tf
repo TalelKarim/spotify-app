@@ -4,20 +4,20 @@ data "aws_region" "current" {}
 
 
 
-resource "null_resource" "opensearch_lambda_role_mapping" {
+# resource "null_resource" "opensearch_lambda_role_mapping" {
 
-  provisioner "local-exec" {
-    command = <<EOT
-curl -X PUT "https://${aws_opensearch_domain.this.endpoint}/_plugins/_security/api/rolesmapping/all_access" \
--u admin:SuperPassword123! \
--H "Content-Type: application/json" \
--d '{
-  "backend_roles": ${var.backend_roles_opensearch}
-}'
-EOT
-  }
+#   provisioner "local-exec" {
+#     command = <<EOT
+# curl -X PUT "https://${aws_opensearch_domain.this.endpoint}/_plugins/_security/api/rolesmapping/all_access" \
+# -u admin:SuperPassword123! \
+# -H "Content-Type: application/json" \
+# -d '{
+#   "backend_roles": ${var.backend_roles_opensearch}
+# }'
+# EOT
+#   }
 
-}
+# }
 
 
 
