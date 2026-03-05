@@ -1,6 +1,31 @@
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
+
+
+
+resource "null_resource" "opensearch_lambda_role_mapping" {
+
+  provisioner "local-exec" {
+    command = <<EOT
+curl -X PUT "https://${aws_opensearch_domain.search.endpoint}/_plugins/_security/api/rolesmapping/all_access" \
+-u admin:SuperPassword123! \
+-H "Content-Type: application/json" \
+-d '{
+  "backend_roles": [
+   ${var.lambda_api_role_arn} 
+  ]
+}'
+EOT
+  }
+
+  depends_on = [
+    aws_opensearch_domain.search
+  ]
+}
+
+
+
 resource "aws_iam_service_linked_role" "opensearch" {
   aws_service_name = "es.amazonaws.com"
   description      = "Service-linked role for Amazon OpenSearch Service"

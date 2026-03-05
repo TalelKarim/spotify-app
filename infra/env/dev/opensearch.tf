@@ -7,6 +7,7 @@ module "opensearch" {
   engine_version = "OpenSearch_2.11"
 
 
+  lambda_api_role_arn = module.iam.lambda_api_role_arn
 
   # Profil low-cost pour lab
   instance_type   = "t3.small.search"
