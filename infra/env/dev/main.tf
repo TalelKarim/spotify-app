@@ -24,10 +24,6 @@ provider "aws" {
 provider "opensearch" {
 
   url = "https://${module.opensearch.domain_endpoint}"
-
-  username = "admin"
-  password = "SuperPassword123!"
-
   healthcheck = false
 
 }
