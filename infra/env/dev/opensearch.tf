@@ -11,9 +11,11 @@ module "opensearch" {
 
   # Profil low-cost pour lab
   instance_type   = "t3.small.search"
-  instance_count  = 1  # un seul nœud pour payer moins
-  ebs_volume_size = 10 # 10 Go suffisent pour la démo
+  instance_count  = 1  
+  ebs_volume_size = 10 
 
+
+   lambda_opensearch_roles  = [ module.iam.lambda_api_role_arn, module.iam.lambda_tech_role_arn ]
   tags = {
     Project     = "spotify-app"
     Environment = var.env
@@ -23,14 +25,14 @@ module "opensearch" {
 
 
 
-module "opensearch_security" {
+# module "opensearch_security" {
 
-  source = "../../modules/opensearch_security"
+#   source = "../../modules/opensearch_security"
 
-  backend_roles = [ module.iam.lambda_api_role_arn, module.iam.lambda_tech_role_arn ]
+#   backend_roles = [ module.iam.lambda_api_role_arn, module.iam.lambda_tech_role_arn ]
 
 
-  depends_on = [
-    module.opensearch
-  ]
-}
+#   depends_on = [
+#     module.opensearch
+#   ]
+# }

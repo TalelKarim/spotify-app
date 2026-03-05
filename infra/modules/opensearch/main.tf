@@ -4,20 +4,75 @@ data "aws_region" "current" {}
 
 
 
-# resource "null_resource" "opensearch_lambda_role_mapping" {
+resource "null_resource" "configure_opensearch_security" {
 
-#   provisioner "local-exec" {
-#     command = <<EOT
-# curl -X PUT "https://${aws_opensearch_domain.this.endpoint}/_plugins/_security/api/rolesmapping/all_access" \
-# -u admin:SuperPassword123! \
-# -H "Content-Type: application/json" \
-# -d '{
-#   "backend_roles": ${var.backend_roles_opensearch}
-# }'
-# EOT
-#   }
+  depends_on = [
+    aws_opensearch_domain.this.endpoint
+  ]
 
-# }
+  provisioner "local-exec" {
+
+    command = <<EOT
+
+set -e
+
+ENDPOINT="https://${aws_opensearch_domain.this.endpoint}"
+AUTH="admin:${var.master_password}"
+
+echo "Waiting for OpenSearch cluster..."
+
+for i in {1..30}; do
+  if curl -s -u $AUTH "$ENDPOINT/_cluster/health" > /dev/null; then
+    echo "Cluster ready"
+    break
+  fi
+  echo "Retry $i..."
+  sleep 10
+done
+
+echo "Creating role tracks_api_role..."
+
+curl -s -u $AUTH \
+  -H "Content-Type: application/json" \
+  -X PUT "$ENDPOINT/_plugins/_security/api/roles/tracks_api_role" \
+  -d '{
+    "cluster_permissions": [],
+    "index_permissions": [{
+      "index_patterns": ["tracks*"],
+      "allowed_actions": [
+        "read",
+        "search"
+      ]
+    }]
+  }'
+
+echo "Mapping lambda role..."
+
+curl -s -u $AUTH \
+  -H "Content-Type: application/json" \
+  -X PUT "$ENDPOINT/_plugins/_security/api/rolesmapping/tracks_api_role" \
+  -d '{
+    "backend_roles": ${var.lambda_opensearch_roles}
+  }'
+
+echo "Ensuring admin mapping..."
+
+curl -s -u $AUTH \
+  -H "Content-Type: application/json" \
+  -X PUT "$ENDPOINT/_plugins/_security/api/rolesmapping/all_access" \
+  -d '{
+    "users": ["admin"]
+  }'
+
+echo "OpenSearch security configured."
+
+EOT
+  }
+
+  triggers = {
+    endpoint =  aws_opensearch_domain.this.endpoint
+  }
+}
 
 
 
@@ -92,7 +147,7 @@ resource "aws_opensearch_domain" "this" {
 
     master_user_options {
       master_user_name     = "admin"
-      master_user_password = "SuperPassword123!"
+      master_user_password = var.master_password 
     }
   }
 

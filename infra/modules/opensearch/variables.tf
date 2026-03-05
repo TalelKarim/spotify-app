@@ -35,3 +35,13 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+
+variable "lambda_opensearch_roles" {
+  type = list(string)
+}
+
+variable "master_password" {
+  type = string
+  default = "SuperPassword123!"
+}
