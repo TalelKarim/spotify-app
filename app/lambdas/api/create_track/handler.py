@@ -4,9 +4,7 @@ import uuid
 import boto3
 from botocore.config import Config
 from datetime import datetime
-
-
-import time 
+import time
 
 REGION = os.environ.get("AWS_REGION", "eu-west-1")
 
@@ -17,12 +15,66 @@ s3 = boto3.client(
     region_name=REGION,
     config=Config(signature_version="s3v4")
 )
+
 TABLE_NAME = os.environ["TRACKS_TABLE"]
 BUCKET_NAME = os.environ["TRACKS_BUCKET"]
 
 table = dynamodb.Table(TABLE_NAME)
 
+
+# -------- AUTH HELPERS --------
+
+def extract_claims(event):
+    rc = event.get("requestContext", {}) or {}
+    auth = rc.get("authorizer", {}) or {}
+
+    # REST API
+    claims = auth.get("claims")
+
+    # HTTP API
+    if not claims:
+        jwt = auth.get("jwt") or {}
+        claims = jwt.get("claims")
+
+    return claims or {}
+
+
+def extract_groups(event):
+    claims = extract_claims(event)
+
+    groups = claims.get("cognito:groups")
+
+    if not groups:
+        return []
+
+    if isinstance(groups, list):
+        return groups
+
+    return [g.strip() for g in str(groups).split(",") if g.strip()]
+
+
+def require_admin(event):
+
+    groups = extract_groups(event)
+
+    if "admin" not in groups:
+        return {
+            "statusCode": 403,
+            "body": json.dumps({"error": "Admin only"}),
+            "headers": {"Content-Type": "application/json"}
+        }
+
+    return None
+
+
+# -------- MAIN HANDLER --------
+
 def main(event, context):
+
+    # Admin check
+    deny = require_admin(event)
+    if deny:
+        return deny
 
     try:
         body = json.loads(event["body"])
@@ -48,7 +100,6 @@ def main(event, context):
 
     # Object key inside S3
     object_key = f"tracks/{track_id}.mp3"
-
 
     upload_expiration = int(time.time()) + (15 * 60)
 
@@ -76,7 +127,7 @@ def main(event, context):
             "Key": object_key,
             "ContentType": "audio/mpeg"
         },
-        ExpiresIn=300  # 5 minutes
+        ExpiresIn=300
     )
 
     return {
@@ -84,5 +135,6 @@ def main(event, context):
         "body": json.dumps({
             "trackId": track_id,
             "uploadUrl": upload_url
-        })
+        }),
+        "headers": {"Content-Type": "application/json"}
     }

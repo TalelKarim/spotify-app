@@ -246,3 +246,8 @@ Tech / Indexing Lambdas
     upsert doc OpenSearch (title, artist, duration, trackId, maybe plays)
 
     Important : plays qui bougent souvent = pas obligé de les réindexer à chaque play (coût). On peut garder OpenSearch pour search “catalogue”, et Dynamo pour stats.
+
+
+
+
+    
