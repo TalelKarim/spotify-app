@@ -125,6 +125,7 @@ def main(event, context):
             "duration": src.get("duration"),
             "plays": src.get("plays", 0),
             "status": src.get("status"),
+            "coverKey": src.get("coverKey"),
             "objectKey": src.get("objectKey") or src.get("audioS3Key"),  # tolère les 2
             "highlights": {
                 "title": hl.get("title"),

@@ -71,7 +71,8 @@ def main(event, context):
         }
 
     object_key = item.get("objectKey")
-
+    cover_url = None
+    
     if not object_key:
         return {
             "statusCode": 500,
@@ -80,7 +81,7 @@ def main(event, context):
         }
 
     audio_url = f"https://{CLOUDFRONT_DOMAIN}/{object_key}"
-
+    cover_url = f"https://{CLOUDFRONT_DOMAIN}/{cover_key}"   
     return {
         "statusCode": 200,
         "body": json.dumps({
@@ -90,6 +91,7 @@ def main(event, context):
             "duration": item.get("duration"),
             "plays": item.get("plays", 0),
             "audioUrl": audio_url
+            "coverUrl": cover_url
         }),
         "headers": {
             "Content-Type": "application/json"
