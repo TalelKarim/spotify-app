@@ -71,8 +71,13 @@ def main(event, context):
         }
 
     object_key = item.get("objectKey")
+       
+    cover_key = item.get("coverKey")
     cover_url = None
-    
+
+    if cover_key:
+        cover_url = f"https://{CLOUDFRONT_DOMAIN}/{cover_key}"
+        
     if not object_key:
         return {
             "statusCode": 500,
@@ -90,7 +95,7 @@ def main(event, context):
             "artist": item.get("artist"),
             "duration": item.get("duration"),
             "plays": item.get("plays", 0),
-            "audioUrl": audio_url
+            "audioUrl": audio_url,
             "coverUrl": cover_url
         }),
         "headers": {
