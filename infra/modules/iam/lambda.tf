@@ -182,7 +182,7 @@ resource "aws_iam_policy" "lambda_api_s3" {
       "Action" : [
         "s3:PutObject"
       ],
-      "Resource" : "arn:aws:s3:::${var.media_bucket_name}/tracks/*"
+      "Resource" : "arn:aws:s3:::${var.media_bucket_name}/*"
     }]
   })
 }
