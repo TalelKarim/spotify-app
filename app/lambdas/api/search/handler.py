@@ -100,7 +100,7 @@ def main(event, context):
     url = f"{OPENSEARCH_ENDPOINT}/{INDEX_NAME}/_search"
 
     try:
-        r = requests.post(url, auth=awsauth, json=body, headers={"Content-Type": "application/json"}, timeout=5)
+        r = requests.post(url, auth=awsauth, json=body, headers={"Content-Type": "application/json"}, timeout=10)
     except Exception as e:
         logger.exception("Error calling OpenSearch: %s", e)
         return {"statusCode": 502, "body": json.dumps({"error": "Search backend unavailable"}), "headers": {"Content-Type": "application/json"}}
