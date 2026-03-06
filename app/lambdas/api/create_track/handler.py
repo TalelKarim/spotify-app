@@ -28,10 +28,8 @@ def extract_claims(event):
     rc = event.get("requestContext", {}) or {}
     auth = rc.get("authorizer", {}) or {}
 
-    # REST API
     claims = auth.get("claims")
 
-    # HTTP API
     if not claims:
         jwt = auth.get("jwt") or {}
         claims = jwt.get("claims")
@@ -84,7 +82,8 @@ def main(event, context):
             "body": json.dumps({"error": "Invalid JSON"})
         }
 
-    # Basic validation
+    # -------- VALIDATION --------
+
     title = body.get("title")
     artist = body.get("artist")
     duration = body.get("duration")
@@ -95,23 +94,50 @@ def main(event, context):
             "body": json.dumps({"error": "Missing required fields"})
         }
 
-    # Generate track ID
+    # Cover content type
+    cover_content_type = body.get("coverContentType", "image/jpeg")
+
+    if not cover_content_type.startswith("image/"):
+        return {
+            "statusCode": 400,
+            "body": json.dumps({"error": "Invalid cover type"})
+        }
+
+    extension_map = {
+        "image/jpeg": "jpg",
+        "image/png": "png",
+        "image/webp": "webp"
+    }
+
+    cover_ext = extension_map.get(cover_content_type)
+
+    if not cover_ext:
+        return {
+            "statusCode": 400,
+            "body": json.dumps({"error": "Unsupported cover format"})
+        }
+
+    # -------- GENERATE IDS --------
+
     track_id = str(uuid.uuid4())
 
-    # Object key inside S3
-    object_key = f"tracks/{track_id}.mp3"
+    audio_key = f"tracks/{track_id}.mp3"
+    cover_key = f"covers/{track_id}.{cover_ext}"
 
     upload_expiration = int(time.time()) + (15 * 60)
 
-    # Write metadata in DynamoDB
+    # -------- DYNAMODB --------
+
     table.put_item(
         Item={
             "PK": f"TRACK#{track_id}",
             "SK": "METADATA",
+            "trackId": track_id,
             "title": title,
             "artist": artist,
             "duration": duration,
-            "objectKey": object_key,
+            "objectKey": audio_key,
+            "coverKey": cover_key,
             "status": "UPLOADING",
             "plays": 0,
             "createdAt": datetime.utcnow().isoformat() + "Z",
@@ -119,22 +145,40 @@ def main(event, context):
         }
     )
 
-    # Generate presigned PUT URL
-    upload_url = s3.generate_presigned_url(
+    # -------- PRESIGNED URL AUDIO --------
+
+    audio_upload_url = s3.generate_presigned_url(
         ClientMethod="put_object",
         Params={
             "Bucket": BUCKET_NAME,
-            "Key": object_key,
+            "Key": audio_key,
             "ContentType": "audio/mpeg"
         },
         ExpiresIn=300
     )
 
+    # -------- PRESIGNED URL COVER --------
+
+    cover_upload_url = s3.generate_presigned_url(
+        ClientMethod="put_object",
+        Params={
+            "Bucket": BUCKET_NAME,
+            "Key": cover_key,
+            "ContentType": cover_content_type
+        },
+        ExpiresIn=300
+    )
+
+    # -------- RESPONSE --------
+
     return {
         "statusCode": 201,
         "body": json.dumps({
             "trackId": track_id,
-            "uploadUrl": upload_url
+            "audioUploadUrl": audio_upload_url,
+            "coverUploadUrl": cover_upload_url,
+            "audioKey": audio_key,
+            "coverKey": cover_key
         }),
         "headers": {"Content-Type": "application/json"}
     }
