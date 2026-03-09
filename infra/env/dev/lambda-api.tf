@@ -12,7 +12,7 @@ locals {
       role = module.iam.lambda_api_role_arn
       env = {
         TRACKS_TABLE = module.dynamodb.tracks_table_name
-
+        CLOUDFRONT_DOMAIN = module.media.cloudfront_domain
       }
     }
 
@@ -109,7 +109,12 @@ module "api_lambdas" {
 
   security_group_ids = lookup(each.value, "vpc_enabled", false) ? [aws_security_group.lambda_search.id] : []
 
-  environment_variables = each.value.env
+  environment_variables = merge(
+  each.value.env,
+  {
+    ALLOWED_ORIGIN = var.frontend_origin
+  }
+)
 
   layers = contains(["api_search"], each.key) ? [aws_lambda_layer_version.python_requests.arn] : []
 }

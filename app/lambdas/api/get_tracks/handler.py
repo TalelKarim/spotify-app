@@ -11,6 +11,25 @@ TABLE_NAME = os.environ["TRACKS_TABLE"]
 CLOUDFRONT_DOMAIN = os.environ.get("CLOUDFRONT_DOMAIN", "").strip()
 
 table = dynamodb.Table(TABLE_NAME)
+ALLOWED_ORIGIN = os.environ.get("ALLOWED_ORIGIN", "http://localhost:5173")
+
+
+
+
+
+def build_response(status_code, body):
+    return {
+        "statusCode": status_code,
+        "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+            "Access-Control-Allow-Credentials": "true",
+        },
+        "body": json.dumps(body),
+    }
+
+
+
 
 
 def decimal_to_native(obj):
@@ -61,7 +80,6 @@ def sanitize_track(item):
         "artist": cleaned.get("artist"),
         "duration": cleaned.get("duration"),
         "plays": cleaned.get("plays", 0),
-        "audioUrl": build_cloudfront_url(cleaned.get("objectKey")),
         "coverUrl": build_cloudfront_url(cleaned.get("coverKey")),
     }
 
@@ -114,10 +132,4 @@ def main(event, context):
         "nextCursor": encode_cursor(last_evaluated_key),
     }
 
-    return {
-        "statusCode": 200,
-        "body": json.dumps(body),
-        "headers": {
-            "Content-Type": "application/json",
-        },
-    }
+    return build_response(200, {"items": items})
