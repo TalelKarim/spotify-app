@@ -45,3 +45,8 @@ output "cognito_client_id" {
 output "cloudfront_domain_media" {
   value = module.media.cloudfront_domain
 }
+
+
+output "cognito_domain" {
+  value = module.cognito.cognito_domain
+}

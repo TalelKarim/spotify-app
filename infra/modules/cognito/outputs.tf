@@ -14,3 +14,7 @@ output "client_id" {
 output "cognito_oidc_issuer" {
   value = "https://cognito-idp.${var.region}.amazonaws.com/${aws_cognito_user_pool.this.id}"
 }
+
+output "cognito_domain" {
+  value = aws_cognito_user_pool_domain.this.domain
+}
