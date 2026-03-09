@@ -13,7 +13,11 @@ dynamodb = boto3.resource("dynamodb")
 s3 = boto3.client(
     "s3",
     region_name=REGION,
-    config=Config(signature_version="s3v4")
+    endpoint_url=f"https://s3.{REGION}.amazonaws.com",
+    config=Config(
+        signature_version="s3v4",
+        s3={"addressing_style": "virtual"}  
+    )
 )
 
 TABLE_NAME = os.environ["TRACKS_TABLE"]
