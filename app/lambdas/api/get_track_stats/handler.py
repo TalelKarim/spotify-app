@@ -1,5 +1,3 @@
-# api_get_track_stats.py
-
 import os
 import boto3
 import json
@@ -7,6 +5,7 @@ from decimal import Decimal
 
 dynamodb = boto3.resource("dynamodb")
 TABLE_NAME = os.environ["TRACKS_TABLE"]
+ALLOWED_ORIGIN = os.environ.get("ALLOWED_ORIGIN", "http://localhost:5173")
 table = dynamodb.Table(TABLE_NAME)
 
 
@@ -17,6 +16,18 @@ def decimal_to_native(obj):
         else:
             return float(obj)
     return obj
+
+
+def build_response(status_code, body):
+    return {
+        "statusCode": status_code,
+        "body": json.dumps(body),
+        "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+            "Access-Control-Allow-Credentials": "true",
+        },
+    }
 
 
 def main(event, context):
@@ -35,10 +46,7 @@ def main(event, context):
     item = response.get("Item")
 
     if not item:
-        return {
-            "statusCode": 404,
-            "body": json.dumps({"error": "Track not found"})
-        }
+        return build_response(404, {"error": "Track not found"})
 
     stats = {
         "trackId": track_id,
@@ -46,12 +54,4 @@ def main(event, context):
         "lastPlayedAt": item.get("lastPlayedAt"),
     }
 
-    # Si tu ajoutes d'autres champs stats (plays7d, plays30d, etc.) tu les branches ici
-
-    return {
-        "statusCode": 200,
-        "body": json.dumps(stats),
-        "headers": {
-            "Content-Type": "application/json",
-        },
-    }
+    return build_response(200, stats)

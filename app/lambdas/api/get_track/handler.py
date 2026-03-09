@@ -7,6 +7,7 @@ dynamodb = boto3.resource("dynamodb")
 
 TABLE_NAME = os.environ["TRACKS_TABLE"]
 CLOUDFRONT_DOMAIN = os.environ.get("CLOUDFRONT_DOMAIN", "").strip()
+ALLOWED_ORIGIN = os.environ.get("ALLOWED_ORIGIN", "http://localhost:5173")
 
 table = dynamodb.Table(TABLE_NAME)
 
@@ -31,7 +32,9 @@ def build_response(status_code, body):
         "statusCode": status_code,
         "body": json.dumps(body),
         "headers": {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+            "Access-Control-Allow-Credentials": "true",
         }
     }
 

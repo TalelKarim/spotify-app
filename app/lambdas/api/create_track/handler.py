@@ -7,6 +7,7 @@ from datetime import datetime
 import time
 
 REGION = os.environ.get("AWS_REGION", "eu-west-1")
+ALLOWED_ORIGIN = os.environ.get("ALLOWED_ORIGIN", "http://localhost:5173")
 
 dynamodb = boto3.resource("dynamodb")
 
@@ -16,7 +17,7 @@ s3 = boto3.client(
     endpoint_url=f"https://s3.{REGION}.amazonaws.com",
     config=Config(
         signature_version="s3v4",
-        s3={"addressing_style": "virtual"}  
+        s3={"addressing_style": "virtual"}
     )
 )
 
@@ -24,6 +25,18 @@ TABLE_NAME = os.environ["TRACKS_TABLE"]
 BUCKET_NAME = os.environ["TRACKS_BUCKET"]
 
 table = dynamodb.Table(TABLE_NAME)
+
+
+def build_response(status_code, body):
+    return {
+        "statusCode": status_code,
+        "body": json.dumps(body),
+        "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+            "Access-Control-Allow-Credentials": "true",
+        }
+    }
 
 
 # -------- AUTH HELPERS --------
@@ -56,15 +69,10 @@ def extract_groups(event):
 
 
 def require_admin(event):
-
     groups = extract_groups(event)
 
     if "admin" not in groups:
-        return {
-            "statusCode": 403,
-            "body": json.dumps({"error": "Admin only"}),
-            "headers": {"Content-Type": "application/json"}
-        }
+        return build_response(403, {"error": "Admin only"})
 
     return None
 
@@ -72,7 +80,6 @@ def require_admin(event):
 # -------- MAIN HANDLER --------
 
 def main(event, context):
-
     # Admin check
     deny = require_admin(event)
     if deny:
@@ -80,11 +87,8 @@ def main(event, context):
 
     try:
         body = json.loads(event["body"])
-    except:
-        return {
-            "statusCode": 400,
-            "body": json.dumps({"error": "Invalid JSON"})
-        }
+    except Exception:
+        return build_response(400, {"error": "Invalid JSON"})
 
     # -------- VALIDATION --------
 
@@ -93,19 +97,13 @@ def main(event, context):
     duration = body.get("duration")
 
     if not title or not artist:
-        return {
-            "statusCode": 400,
-            "body": json.dumps({"error": "Missing required fields"})
-        }
+        return build_response(400, {"error": "Missing required fields"})
 
     # Cover content type
     cover_content_type = body.get("coverContentType", "image/jpeg")
 
     if not cover_content_type.startswith("image/"):
-        return {
-            "statusCode": 400,
-            "body": json.dumps({"error": "Invalid cover type"})
-        }
+        return build_response(400, {"error": "Invalid cover type"})
 
     extension_map = {
         "image/jpeg": "jpg",
@@ -116,10 +114,7 @@ def main(event, context):
     cover_ext = extension_map.get(cover_content_type)
 
     if not cover_ext:
-        return {
-            "statusCode": 400,
-            "body": json.dumps({"error": "Unsupported cover format"})
-        }
+        return build_response(400, {"error": "Unsupported cover format"})
 
     # -------- GENERATE IDS --------
 
@@ -175,14 +170,10 @@ def main(event, context):
 
     # -------- RESPONSE --------
 
-    return {
-        "statusCode": 201,
-        "body": json.dumps({
-            "trackId": track_id,
-            "audioUploadUrl": audio_upload_url,
-            "coverUploadUrl": cover_upload_url,
-            "audioKey": audio_key,
-            "coverKey": cover_key
-        }),
-        "headers": {"Content-Type": "application/json"}
-    }
+    return build_response(201, {
+        "trackId": track_id,
+        "audioUploadUrl": audio_upload_url,
+        "coverUploadUrl": cover_upload_url,
+        "audioKey": audio_key,
+        "coverKey": cover_key
+    })

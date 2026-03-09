@@ -1,5 +1,3 @@
-# api_get_my_history.py
-
 import os
 import json
 from decimal import Decimal
@@ -8,6 +6,7 @@ import boto3
 
 dynamodb = boto3.resource("dynamodb")
 TABLE_NAME = os.environ["LISTENING_EVENTS_TABLE"]
+ALLOWED_ORIGIN = os.environ.get("ALLOWED_ORIGIN", "http://localhost:5173")
 table = dynamodb.Table(TABLE_NAME)
 
 
@@ -22,6 +21,18 @@ def decimal_to_native(obj):
     if isinstance(obj, dict):
         return {k: decimal_to_native(v) for k, v in obj.items()}
     return obj
+
+
+def build_response(status_code, body):
+    return {
+        "statusCode": status_code,
+        "body": json.dumps(body),
+        "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+            "Access-Control-Allow-Credentials": "true",
+        },
+    }
 
 
 def extract_user_id(event):
@@ -50,10 +61,7 @@ def extract_user_id(event):
 def main(event, context):
     user_id = extract_user_id(event)
     if not user_id:
-        return {
-            "statusCode": 401,
-            "body": json.dumps({"error": "Unauthorized"}),
-        }
+        return build_response(401, {"error": "Unauthorized"})
 
     params = event.get("queryStringParameters") or {}
     limit = params.get("limit")
@@ -74,23 +82,18 @@ def main(event, context):
 
     items = [decimal_to_native(item) for item in resp.get("Items", [])]
 
-
     clean_items = []
 
     for item in items:
-            clean_items.append({
-                "trackId": item["PK"].replace("TRACK#", ""),
-                "playedAt": item["SK"].replace("TS#", ""),
-                "metadata": item.get("metadata", {})
-            })
+        clean_items.append({
+            "trackId": item["PK"].replace("TRACK#", ""),
+            "playedAt": item["SK"].replace("TS#", ""),
+            "metadata": item.get("metadata", {})
+        })
 
     body = {
         "userId": user_id,
         "items": clean_items,
     }
 
-    return {
-        "statusCode": 200,
-        "body": json.dumps(body),
-        "headers": {"Content-Type": "application/json"},
-    }
+    return build_response(200, body)
