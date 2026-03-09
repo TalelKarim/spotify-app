@@ -4,9 +4,12 @@ import base64
 from decimal import Decimal
 
 import boto3
+from boto3.dynamodb.conditions import Attr
 
 dynamodb = boto3.resource("dynamodb")
 TABLE_NAME = os.environ["TRACKS_TABLE"]
+CLOUDFRONT_DOMAIN = os.environ.get("CLOUDFRONT_DOMAIN", "").strip()
+
 table = dynamodb.Table(TABLE_NAME)
 
 
@@ -39,6 +42,30 @@ def encode_cursor(key):
     return base64.b64encode(raw).decode("utf-8")
 
 
+def build_cloudfront_url(key):
+    if not key or not CLOUDFRONT_DOMAIN:
+        return None
+    return f"https://{CLOUDFRONT_DOMAIN}/{key}"
+
+
+def sanitize_track(item):
+    cleaned = {k: v for k, v in item.items() if k not in ("PK", "SK")}
+    cleaned = decimal_to_native(cleaned)
+
+    pk = item["PK"]
+    track_id = pk.split("#", 1)[1] if "#" in pk else pk
+
+    return {
+        "trackId": track_id,
+        "title": cleaned.get("title"),
+        "artist": cleaned.get("artist"),
+        "duration": cleaned.get("duration"),
+        "plays": cleaned.get("plays", 0),
+        "audioUrl": build_cloudfront_url(cleaned.get("objectKey")),
+        "coverUrl": build_cloudfront_url(cleaned.get("coverKey")),
+    }
+
+
 def main(event, context):
     params = event.get("queryStringParameters") or {}
 
@@ -48,44 +75,43 @@ def main(event, context):
     except ValueError:
         limit = 50
 
+    if limit <= 0:
+        limit = 50
+
     cursor = decode_cursor(params.get("cursor"))
 
-    scan_kwargs = {
-        "FilterExpression": "begins_with(#pk, :pk_prefix) AND #sk = :sk",
-        "ExpressionAttributeNames": {
-            "#pk": "PK",
-            "#sk": "SK",
-        },
-        "ExpressionAttributeValues": {
-            ":pk_prefix": "TRACK#",
-            ":sk": "METADATA",
-        },
-        "Limit": limit,
-    }
-
-    if cursor:
-        scan_kwargs["ExclusiveStartKey"] = cursor
-
-    resp = table.scan(**scan_kwargs)
-
     items = []
-    for item in resp.get("Items", []):
-        # On enlève PK/SK et on convertit les décimaux
-        cleaned = {k: v for k, v in item.items() if k not in ("PK", "SK")}
-        cleaned = decimal_to_native(cleaned)
+    last_evaluated_key = cursor
 
-        # On extrait trackId depuis PK = "TRACK#xxx"
-        pk = item["PK"]
-        track_id = pk.split("#", 1)[1] if "#" in pk else pk
-        cleaned["trackId"] = track_id
+    # On boucle car DynamoDB applique le Limit avant le FilterExpression
+    while len(items) < limit:
+        scan_kwargs = {
+            "FilterExpression": (
+                Attr("PK").begins_with("TRACK#")
+                & Attr("SK").eq("METADATA")
+                & Attr("status").eq("READY")
+            ),
+            "Limit": limit,
+        }
 
-        items.append(cleaned)
+        if last_evaluated_key:
+            scan_kwargs["ExclusiveStartKey"] = last_evaluated_key
 
-    next_cursor = encode_cursor(resp.get("LastEvaluatedKey"))
+        resp = table.scan(**scan_kwargs)
+
+        for item in resp.get("Items", []):
+            items.append(sanitize_track(item))
+            if len(items) >= limit:
+                break
+
+        last_evaluated_key = resp.get("LastEvaluatedKey")
+
+        if not last_evaluated_key:
+            break
 
     body = {
         "items": items,
-        "nextCursor": next_cursor,
+        "nextCursor": encode_cursor(last_evaluated_key),
     }
 
     return {
