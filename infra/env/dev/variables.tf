@@ -32,3 +32,11 @@ variable "vpc_name" {
 variable "vpc_cidr" {
   type = string
 }
+
+
+
+
+variable "frontend_origin" {
+  type    = string
+  default = "http://localhost:5173"
+}

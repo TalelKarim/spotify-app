@@ -1,336 +1,559 @@
-module "api_gateway" {
-  source                = "../../modules/api-gateway"
-  name                  = "spotify-dev-api"
-  cognito_user_pool_arn = module.cognito.user_pool_arn
+# -------------------------------------------------
+# CORS helpers - Gateway Responses
+# -------------------------------------------------
+
+resource "aws_api_gateway_gateway_response" "default_4xx" {
+  rest_api_id   = module.api_gateway.id
+  response_type = "DEFAULT_4XX"
+
+  response_parameters = {
+    "gatewayresponse.header.Access-Control-Allow-Origin"  = "'${var.frontend_origin}'"
+    "gatewayresponse.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+    "gatewayresponse.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,DELETE,OPTIONS'"
+  }
+
+  response_templates = {
+    "application/json" = "{\"message\":$context.error.messageString}"
+  }
+}
+
+resource "aws_api_gateway_gateway_response" "default_5xx" {
+  rest_api_id   = module.api_gateway.id
+  response_type = "DEFAULT_5XX"
+
+  response_parameters = {
+    "gatewayresponse.header.Access-Control-Allow-Origin"  = "'${var.frontend_origin}'"
+    "gatewayresponse.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+    "gatewayresponse.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,DELETE,OPTIONS'"
+  }
+
+  response_templates = {
+    "application/json" = "{\"message\":$context.error.messageString}"
+  }
 }
 
 
+# -------------------------------------------------
+# CORS - OPTIONS /tracks
+# -------------------------------------------------
 
-# tracks
-
-resource "aws_api_gateway_resource" "tracks" {
-  rest_api_id = module.api_gateway.id
-  parent_id   = module.api_gateway.root_resource_id
-  path_part   = "tracks"
-}
-
-resource "aws_api_gateway_resource" "track_id" {
-  rest_api_id = module.api_gateway.id
-  parent_id   = aws_api_gateway_resource.tracks.id
-  path_part   = "{trackId}"
-}
-
-resource "aws_api_gateway_resource" "play" {
-  rest_api_id = module.api_gateway.id
-  parent_id   = aws_api_gateway_resource.track_id.id
-  path_part   = "play"
-}
-
-
-
-
-
-# POST /tracks
-
-resource "aws_api_gateway_method" "post_track" {
+resource "aws_api_gateway_method" "options_tracks" {
   rest_api_id   = module.api_gateway.id
   resource_id   = aws_api_gateway_resource.tracks.id
-  http_method   = "POST"
-  authorization = "COGNITO_USER_POOLS"
-  authorizer_id = module.api_gateway.authorizer_id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
 }
 
-resource "aws_api_gateway_integration" "post_track" {
-  rest_api_id             = module.api_gateway.id
-  resource_id             = aws_api_gateway_resource.tracks.id
-  http_method             = aws_api_gateway_method.post_track.http_method
-  integration_http_method = "POST"
-  type                    = "AWS_PROXY"
-  uri                     = module.api_lambdas["api_create_track"].invoke_arn
-}
-
-
-
-# POST /tracks/{trackId}/play
-resource "aws_api_gateway_method" "play_track" {
-  rest_api_id   = module.api_gateway.id
-  resource_id   = aws_api_gateway_resource.play.id
-  http_method   = "POST"
-  authorization = "COGNITO_USER_POOLS"
-  authorizer_id = module.api_gateway.authorizer_id
-}
-
-
-resource "aws_api_gateway_integration" "play_track" {
-  rest_api_id             = module.api_gateway.id
-  resource_id             = aws_api_gateway_resource.play.id
-  http_method             = aws_api_gateway_method.play_track.http_method
-  integration_http_method = "POST"
-  type                    = "AWS_PROXY"
-  uri                     = module.api_lambdas["api_start_stream"].invoke_arn
-}
-
-# GET /tracks
-resource "aws_api_gateway_method" "get_tracks" {
-  rest_api_id   = module.api_gateway.id
-  resource_id   = aws_api_gateway_resource.tracks.id
-  http_method   = "GET"
-  authorization = "NONE" # ou "COGNITO_USER_POOLS" si tu veux protéger
-}
-
-resource "aws_api_gateway_integration" "get_tracks" {
-  rest_api_id             = module.api_gateway.id
-  resource_id             = aws_api_gateway_resource.tracks.id
-  http_method             = aws_api_gateway_method.get_tracks.http_method
-  integration_http_method = "POST"
-  type                    = "AWS_PROXY"
-  uri                     = module.api_lambdas["api_get_tracks"].invoke_arn
-}
-
-
-
-
-# GET /tracks/{trackId}/stats
-
-resource "aws_api_gateway_resource" "track_stats" {
+resource "aws_api_gateway_integration" "options_tracks" {
   rest_api_id = module.api_gateway.id
-  parent_id   = aws_api_gateway_resource.track_id.id
-  path_part   = "stats"
+  resource_id = aws_api_gateway_resource.tracks.id
+  http_method = aws_api_gateway_method.options_tracks.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
 }
 
-resource "aws_api_gateway_method" "get_track_stats" {
-  rest_api_id   = module.api_gateway.id
-  resource_id   = aws_api_gateway_resource.track_stats.id
-  http_method   = "GET"
-  authorization = "COGNITO_USER_POOLS"
-  authorizer_id = module.api_gateway.authorizer_id
+resource "aws_api_gateway_method_response" "options_tracks_200" {
+  rest_api_id = module.api_gateway.id
+  resource_id = aws_api_gateway_resource.tracks.id
+  http_method = aws_api_gateway_method.options_tracks.http_method
+  status_code = "200"
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Headers" = true
+  }
 }
 
-resource "aws_api_gateway_integration" "get_track_stats" {
-  rest_api_id             = module.api_gateway.id
-  resource_id             = aws_api_gateway_resource.track_stats.id
-  http_method             = aws_api_gateway_method.get_track_stats.http_method
-  integration_http_method = "POST"
-  type                    = "AWS_PROXY"
-  uri                     = module.api_lambdas["api_get_track_stats"].invoke_arn
+resource "aws_api_gateway_integration_response" "options_tracks_200" {
+  rest_api_id = module.api_gateway.id
+  resource_id = aws_api_gateway_resource.tracks.id
+  http_method = aws_api_gateway_method.options_tracks.http_method
+  status_code = aws_api_gateway_method_response.options_tracks_200.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = "'${var.frontend_origin}'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+  }
+
+  response_templates = {
+    "application/json" = ""
+  }
 }
 
 
 
-# GET /tracks/{trackId}
+# -------------------------------------------------
+# CORS - OPTIONS /tracks/{trackId}
+# -------------------------------------------------
 
-resource "aws_api_gateway_method" "get_track" {
+resource "aws_api_gateway_method" "options_track_id" {
   rest_api_id   = module.api_gateway.id
   resource_id   = aws_api_gateway_resource.track_id.id
-  http_method   = "GET"
+  http_method   = "OPTIONS"
   authorization = "NONE"
 }
 
-
-resource "aws_api_gateway_integration" "get_track" {
+resource "aws_api_gateway_integration" "options_track_id" {
   rest_api_id = module.api_gateway.id
   resource_id = aws_api_gateway_resource.track_id.id
-  http_method = aws_api_gateway_method.get_track.http_method
+  http_method = aws_api_gateway_method.options_track_id.http_method
+  type        = "MOCK"
 
-  integration_http_method = "POST"
-  type                    = "AWS_PROXY"
-  uri                     = module.api_lambdas["api_get_track"].invoke_arn
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
 }
 
-
-
-
-# me 
-
-resource "aws_api_gateway_resource" "me" {
+resource "aws_api_gateway_method_response" "options_track_id_200" {
   rest_api_id = module.api_gateway.id
-  parent_id   = module.api_gateway.root_resource_id
-  path_part   = "me"
+  resource_id = aws_api_gateway_resource.track_id.id
+  http_method = aws_api_gateway_method.options_track_id.http_method
+  status_code = "200"
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Headers" = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "options_track_id_200" {
+  rest_api_id = module.api_gateway.id
+  resource_id = aws_api_gateway_resource.track_id.id
+  http_method = aws_api_gateway_method.options_track_id.http_method
+  status_code = aws_api_gateway_method_response.options_track_id_200.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = "'${var.frontend_origin}'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+  }
+
+  response_templates = {
+    "application/json" = ""
+  }
 }
 
 
 
 
-# GET /me
-resource "aws_api_gateway_method" "get_me" {
+# -------------------------------------------------
+# CORS - OPTIONS /tracks/{trackId}/play
+# -------------------------------------------------
+
+resource "aws_api_gateway_method" "options_play" {
+  rest_api_id   = module.api_gateway.id
+  resource_id   = aws_api_gateway_resource.play.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "options_play" {
+  rest_api_id = module.api_gateway.id
+  resource_id = aws_api_gateway_resource.play.id
+  http_method = aws_api_gateway_method.options_play.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+resource "aws_api_gateway_method_response" "options_play_200" {
+  rest_api_id = module.api_gateway.id
+  resource_id = aws_api_gateway_resource.play.id
+  http_method = aws_api_gateway_method.options_play.http_method
+  status_code = "200"
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Headers" = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "options_play_200" {
+  rest_api_id = module.api_gateway.id
+  resource_id = aws_api_gateway_resource.play.id
+  http_method = aws_api_gateway_method.options_play.http_method
+  status_code = aws_api_gateway_method_response.options_play_200.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = "'${var.frontend_origin}'"
+    "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+  }
+
+  response_templates = {
+    "application/json" = ""
+  }
+}
+
+
+
+# -------------------------------------------------
+# CORS - OPTIONS /tracks/{trackId}/stats
+# -------------------------------------------------
+
+resource "aws_api_gateway_method" "options_track_stats" {
+  rest_api_id   = module.api_gateway.id
+  resource_id   = aws_api_gateway_resource.track_stats.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "options_track_stats" {
+  rest_api_id = module.api_gateway.id
+  resource_id = aws_api_gateway_resource.track_stats.id
+  http_method = aws_api_gateway_method.options_track_stats.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+resource "aws_api_gateway_method_response" "options_track_stats_200" {
+  rest_api_id = module.api_gateway.id
+  resource_id = aws_api_gateway_resource.track_stats.id
+  http_method = aws_api_gateway_method.options_track_stats.http_method
+  status_code = "200"
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Headers" = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "options_track_stats_200" {
+  rest_api_id = module.api_gateway.id
+  resource_id = aws_api_gateway_resource.track_stats.id
+  http_method = aws_api_gateway_method.options_track_stats.http_method
+  status_code = aws_api_gateway_method_response.options_track_stats_200.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = "'${var.frontend_origin}'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+  }
+
+  response_templates = {
+    "application/json" = ""
+  }
+}
+
+
+
+
+# -------------------------------------------------
+# CORS - OPTIONS /me
+# -------------------------------------------------
+
+resource "aws_api_gateway_method" "options_me" {
   rest_api_id   = module.api_gateway.id
   resource_id   = aws_api_gateway_resource.me.id
-  http_method   = "GET"
-  authorization = "COGNITO_USER_POOLS"
-  authorizer_id = module.api_gateway.authorizer_id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
 }
 
-#GET /me/listening/history
-
-resource "aws_api_gateway_resource" "me_listening" {
+resource "aws_api_gateway_integration" "options_me" {
   rest_api_id = module.api_gateway.id
-  parent_id   = aws_api_gateway_resource.me.id
-  path_part   = "listening"
+  resource_id = aws_api_gateway_resource.me.id
+  http_method = aws_api_gateway_method.options_me.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
 }
 
-resource "aws_api_gateway_resource" "me_listening_history" {
+resource "aws_api_gateway_method_response" "options_me_200" {
   rest_api_id = module.api_gateway.id
-  parent_id   = aws_api_gateway_resource.me_listening.id
-  path_part   = "history"
+  resource_id = aws_api_gateway_resource.me.id
+  http_method = aws_api_gateway_method.options_me.http_method
+  status_code = "200"
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Headers" = true
+  }
 }
 
-resource "aws_api_gateway_method" "get_me_listening_history" {
+resource "aws_api_gateway_integration_response" "options_me_200" {
+  rest_api_id = module.api_gateway.id
+  resource_id = aws_api_gateway_resource.me.id
+  http_method = aws_api_gateway_method.options_me.http_method
+  status_code = aws_api_gateway_method_response.options_me_200.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = "'${var.frontend_origin}'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+  }
+
+  response_templates = {
+    "application/json" = ""
+  }
+}
+
+
+
+# -------------------------------------------------
+# CORS - OPTIONS /me/listening/history
+# -------------------------------------------------
+
+resource "aws_api_gateway_method" "options_me_listening_history" {
   rest_api_id   = module.api_gateway.id
   resource_id   = aws_api_gateway_resource.me_listening_history.id
-  http_method   = "GET"
-  authorization = "COGNITO_USER_POOLS"
-  authorizer_id = module.api_gateway.authorizer_id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
 }
 
-resource "aws_api_gateway_integration" "get_me_listening_history" {
-  rest_api_id             = module.api_gateway.id
-  resource_id             = aws_api_gateway_resource.me_listening_history.id
-  http_method             = aws_api_gateway_method.get_me_listening_history.http_method
-  integration_http_method = "POST"
-  type                    = "AWS_PROXY"
-  uri                     = module.api_lambdas["api_get_myhistory"].invoke_arn
-}
-
-
-
-
-resource "aws_api_gateway_integration" "get_me" {
-  rest_api_id             = module.api_gateway.id
-  resource_id             = aws_api_gateway_resource.me.id
-  http_method             = aws_api_gateway_method.get_me.http_method
-  integration_http_method = "POST"
-  type                    = "AWS_PROXY"
-  uri                     = module.api_lambdas["api_get_me"].invoke_arn
-}
-
-
-
-#analytics
-
-resource "aws_api_gateway_resource" "analytics" {
+resource "aws_api_gateway_integration" "options_me_listening_history" {
   rest_api_id = module.api_gateway.id
-  parent_id   = module.api_gateway.root_resource_id
-  path_part   = "analytics"
+  resource_id = aws_api_gateway_resource.me_listening_history.id
+  http_method = aws_api_gateway_method.options_me_listening_history.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
 }
 
-resource "aws_api_gateway_resource" "analytics_global" {
+resource "aws_api_gateway_method_response" "options_me_listening_history_200" {
   rest_api_id = module.api_gateway.id
-  parent_id   = aws_api_gateway_resource.analytics.id
-  path_part   = "global"
+  resource_id = aws_api_gateway_resource.me_listening_history.id
+  http_method = aws_api_gateway_method.options_me_listening_history.http_method
+  status_code = "200"
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Headers" = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "options_me_listening_history_200" {
+  rest_api_id = module.api_gateway.id
+  resource_id = aws_api_gateway_resource.me_listening_history.id
+  http_method = aws_api_gateway_method.options_me_listening_history.http_method
+  status_code = aws_api_gateway_method_response.options_me_listening_history_200.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = "'${var.frontend_origin}'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+  }
+
+  response_templates = {
+    "application/json" = ""
+  }
 }
 
 
-resource "aws_api_gateway_method" "get_analytics" {
+# -------------------------------------------------
+# CORS - OPTIONS /analytics/global
+# -------------------------------------------------
+
+resource "aws_api_gateway_method" "options_analytics_global" {
   rest_api_id   = module.api_gateway.id
   resource_id   = aws_api_gateway_resource.analytics_global.id
-  http_method   = "GET"
+  http_method   = "OPTIONS"
   authorization = "NONE"
 }
 
-
-
-resource "aws_api_gateway_integration" "get_analytics" {
-  rest_api_id             = module.api_gateway.id
-  resource_id             = aws_api_gateway_resource.analytics_global.id
-  http_method             = aws_api_gateway_method.get_analytics.http_method
-  integration_http_method = "POST"
-  type                    = "AWS_PROXY"
-  uri                     = module.api_lambdas["api_get_analytics"].invoke_arn
-}
-
-
-
-
-
-
-# GET /search
-
-
-resource "aws_api_gateway_resource" "search" {
+resource "aws_api_gateway_integration" "options_analytics_global" {
   rest_api_id = module.api_gateway.id
-  parent_id   = module.api_gateway.root_resource_id
-  path_part   = "search"
+  resource_id = aws_api_gateway_resource.analytics_global.id
+  http_method = aws_api_gateway_method.options_analytics_global.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+resource "aws_api_gateway_method_response" "options_analytics_global_200" {
+  rest_api_id = module.api_gateway.id
+  resource_id = aws_api_gateway_resource.analytics_global.id
+  http_method = aws_api_gateway_method.options_analytics_global.http_method
+  status_code = "200"
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Headers" = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "options_analytics_global_200" {
+  rest_api_id = module.api_gateway.id
+  resource_id = aws_api_gateway_resource.analytics_global.id
+  http_method = aws_api_gateway_method.options_analytics_global.http_method
+  status_code = aws_api_gateway_method_response.options_analytics_global_200.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = "'${var.frontend_origin}'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+  }
+
+  response_templates = {
+    "application/json" = ""
+  }
 }
 
 
-resource "aws_api_gateway_method" "search" {
+# -------------------------------------------------
+# CORS - OPTIONS /search
+# -------------------------------------------------
+
+resource "aws_api_gateway_method" "options_search" {
   rest_api_id   = module.api_gateway.id
   resource_id   = aws_api_gateway_resource.search.id
-  http_method   = "GET"
+  http_method   = "OPTIONS"
   authorization = "NONE"
 }
 
-resource "aws_api_gateway_integration" "search" {
-  rest_api_id             = module.api_gateway.id
-  resource_id             = aws_api_gateway_resource.search.id
-  http_method             = aws_api_gateway_method.search.http_method
-  integration_http_method = "POST"
-  type                    = "AWS_PROXY"
-  uri                     = module.api_lambdas["api_search"].invoke_arn
-}
-
-# POST /events/listening
-
-# resource "aws_api_gateway_resource" "events" {
-#   rest_api_id = module.api_gateway.id
-#   parent_id   = module.api_gateway.root_resource_id
-#   path_part   = "events"
-# }
-
-# resource "aws_api_gateway_resource" "listening" {
-#   rest_api_id = module.api_gateway.id
-#   parent_id   = aws_api_gateway_resource.events.id
-#   path_part   = "listening"
-# }
-
-# resource "aws_api_gateway_method" "post_listening_event" {
-#   rest_api_id   = module.api_gateway.id
-#   resource_id   = aws_api_gateway_resource.listening.id
-#   http_method   = "POST"
-#   authorization = "COGNITO_USER_POOLS"
-#   authorizer_id = module.api_gateway.authorizer_id
-# }
-
-
-# resource "aws_api_gateway_integration" "post_listening_event" {
-#   rest_api_id             = module.api_gateway.id
-#   resource_id             = aws_api_gateway_resource.listening.id
-#   http_method             = aws_api_gateway_method.post_listening_event.http_method
-#   integration_http_method = "POST"
-#   type                    = "AWS_PROXY"
-#   uri                     = module.api_lambdas["api_post_listening_event"].invoke_arn
-# }
-
-
-
-
-
-
-
-# health 
-
-
-resource "aws_api_gateway_resource" "health" {
+resource "aws_api_gateway_integration" "options_search" {
   rest_api_id = module.api_gateway.id
-  parent_id   = module.api_gateway.root_resource_id
-  path_part   = "health"
+  resource_id = aws_api_gateway_resource.search.id
+  http_method = aws_api_gateway_method.options_search.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
 }
 
-resource "aws_api_gateway_method" "health_get" {
+resource "aws_api_gateway_method_response" "options_search_200" {
+  rest_api_id = module.api_gateway.id
+  resource_id = aws_api_gateway_resource.search.id
+  http_method = aws_api_gateway_method.options_search.http_method
+  status_code = "200"
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Headers" = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "options_search_200" {
+  rest_api_id = module.api_gateway.id
+  resource_id = aws_api_gateway_resource.search.id
+  http_method = aws_api_gateway_method.options_search.http_method
+  status_code = aws_api_gateway_method_response.options_search_200.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = "'${var.frontend_origin}'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+  }
+
+  response_templates = {
+    "application/json" = ""
+  }
+}
+
+
+
+
+# -------------------------------------------------
+# CORS - OPTIONS /health
+# -------------------------------------------------
+
+resource "aws_api_gateway_method" "options_health" {
   rest_api_id   = module.api_gateway.id
   resource_id   = aws_api_gateway_resource.health.id
-  http_method   = "GET"
+  http_method   = "OPTIONS"
   authorization = "NONE"
 }
 
-resource "aws_api_gateway_integration" "health_get" {
-  rest_api_id             = module.api_gateway.id
-  resource_id             = aws_api_gateway_resource.health.id
-  http_method             = aws_api_gateway_method.health_get.http_method
-  integration_http_method = "POST"
-  type                    = "AWS_PROXY"
-  uri                     = module.api_lambdas["api_healthcheck"].invoke_arn
+resource "aws_api_gateway_integration" "options_health" {
+  rest_api_id = module.api_gateway.id
+  resource_id = aws_api_gateway_resource.health.id
+  http_method = aws_api_gateway_method.options_health.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
 }
+
+resource "aws_api_gateway_method_response" "options_health_200" {
+  rest_api_id = module.api_gateway.id
+  resource_id = aws_api_gateway_resource.health.id
+  http_method = aws_api_gateway_method.options_health.http_method
+  status_code = "200"
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Headers" = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "options_health_200" {
+  rest_api_id = module.api_gateway.id
+  resource_id = aws_api_gateway_resource.health.id
+  http_method = aws_api_gateway_method.options_health.http_method
+  status_code = aws_api_gateway_method_response.options_health_200.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = "'${var.frontend_origin}'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+  }
+
+  response_templates = {
+    "application/json" = ""
+  }
+}
+
 
 
 
@@ -338,7 +561,6 @@ resource "aws_api_gateway_integration" "health_get" {
 resource "aws_api_gateway_deployment" "this" {
   rest_api_id = module.api_gateway.id
 
-  # ⚠️ TRÈS IMPORTANT
   depends_on = [
     aws_api_gateway_integration.play_track,
     aws_api_gateway_integration.get_me,
@@ -348,17 +570,45 @@ resource "aws_api_gateway_deployment" "this" {
     aws_api_gateway_integration.post_track,
     aws_api_gateway_integration.search,
     aws_api_gateway_integration.health_get,
-    aws_api_gateway_integration.get_me_listening_history
+    aws_api_gateway_integration.get_me_listening_history,
+
+    aws_api_gateway_integration.options_tracks,
+    aws_api_gateway_integration.options_track_id,
+    aws_api_gateway_integration.options_play,
+    aws_api_gateway_integration.options_track_stats,
+    aws_api_gateway_integration.options_me,
+    aws_api_gateway_integration.options_me_listening_history,
+    aws_api_gateway_integration.options_analytics_global,
+    aws_api_gateway_integration.options_search,
+    aws_api_gateway_integration.options_health,
+
+    aws_api_gateway_gateway_response.default_4xx,
+    aws_api_gateway_gateway_response.default_5xx
   ]
 
   triggers = {
     redeployment = sha1(jsonencode([
       aws_api_gateway_resource.tracks.id,
+      aws_api_gateway_resource.track_id.id,
+      aws_api_gateway_resource.play.id,
+      aws_api_gateway_resource.track_stats.id,
       aws_api_gateway_resource.me.id,
+      aws_api_gateway_resource.me_listening.id,
+      aws_api_gateway_resource.me_listening_history.id,
       aws_api_gateway_resource.search.id,
       aws_api_gateway_resource.analytics.id,
-      aws_api_gateway_resource.health.id
+      aws_api_gateway_resource.analytics_global.id,
+      aws_api_gateway_resource.health.id,
 
+      aws_api_gateway_method.options_tracks.id,
+      aws_api_gateway_method.options_track_id.id,
+      aws_api_gateway_method.options_play.id,
+      aws_api_gateway_method.options_track_stats.id,
+      aws_api_gateway_method.options_me.id,
+      aws_api_gateway_method.options_me_listening_history.id,
+      aws_api_gateway_method.options_analytics_global.id,
+      aws_api_gateway_method.options_search.id,
+      aws_api_gateway_method.options_health.id
     ]))
   }
 
@@ -366,34 +616,6 @@ resource "aws_api_gateway_deployment" "this" {
     create_before_destroy = true
   }
 }
-
-
-
-# Stage Dev api gw 
-resource "aws_api_gateway_stage" "dev" {
-  stage_name    = "dev"
-  rest_api_id   = module.api_gateway.id
-  deployment_id = aws_api_gateway_deployment.this.id
-
-  xray_tracing_enabled = true
-
-  tags = {
-    Environment = "dev"
-    Project     = "spotify-app"
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
