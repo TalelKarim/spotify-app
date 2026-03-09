@@ -11,6 +11,7 @@ logger.setLevel(logging.INFO)
 
 region = os.environ.get("AWS_REGION", "eu-west-1")
 service = "es"
+ALLOWED_ORIGIN = os.environ.get("ALLOWED_ORIGIN", "http://localhost:5173")
 
 session = boto3.Session()
 credentials = session.get_credentials()
@@ -29,12 +30,24 @@ OPENSEARCH_ENDPOINT = RAW_ENDPOINT if RAW_ENDPOINT.startswith("http") else f"htt
 INDEX_NAME = os.environ.get("OPENSEARCH_INDEX", "tracks")
 
 
+def build_response(status_code, body):
+    return {
+        "statusCode": status_code,
+        "body": json.dumps(body),
+        "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+            "Access-Control-Allow-Credentials": "true",
+        },
+    }
+
+
 def main(event, context):
     params = event.get("queryStringParameters") or {}
 
     q = (params.get("q") or "").strip()
     if not q:
-        return {"statusCode": 400, "body": json.dumps({"error": "Missing query parameter 'q'"}), "headers": {"Content-Type": "application/json"}}
+        return build_response(400, {"error": "Missing query parameter 'q'"})
 
     # pagination
     try:
@@ -103,11 +116,11 @@ def main(event, context):
         r = requests.post(url, auth=awsauth, json=body, headers={"Content-Type": "application/json"}, timeout=10)
     except Exception as e:
         logger.exception("Error calling OpenSearch: %s", e)
-        return {"statusCode": 502, "body": json.dumps({"error": "Search backend unavailable"}), "headers": {"Content-Type": "application/json"}}
+        return build_response(502, {"error": "Search backend unavailable"})
 
     if r.status_code >= 300:
         logger.error("OpenSearch error %s: %s", r.status_code, r.text)
-        return {"statusCode": 502, "body": json.dumps({"error": "Search query failed", "details": r.text[:500]}), "headers": {"Content-Type": "application/json"}}
+        return build_response(502, {"error": "Search query failed", "details": r.text[:500]})
 
     data = r.json()
     hits = data.get("hits", {}).get("hits", [])
@@ -133,15 +146,11 @@ def main(event, context):
             }
         })
 
-    return {
-        "statusCode": 200,
-        "body": json.dumps({
-            "q": q,
-            "total": total,
-            "offset": offset,
-            "limit": size,
-            "sort": sort_mode,
-            "results": results
-        }),
-        "headers": {"Content-Type": "application/json"},
-    }
+    return build_response(200, {
+        "q": q,
+        "total": total,
+        "offset": offset,
+        "limit": size,
+        "sort": sort_mode,
+        "results": results
+    })

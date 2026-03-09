@@ -8,10 +8,7 @@ dynamodb = boto3.resource("dynamodb")
 TABLE_NAME = os.environ["ANALYTICS_TABLE"]
 table = dynamodb.Table(TABLE_NAME)
 
-
-
 ALLOWED_ORIGIN = os.environ.get("ALLOWED_ORIGIN", "http://localhost:5173")
-
 
 
 def decimal_to_native(obj):
@@ -20,9 +17,10 @@ def decimal_to_native(obj):
     if isinstance(obj, dict):
         return {k: decimal_to_native(v) for k, v in obj.items()}
     if isinstance(obj, Decimal):
-        return int(obj)
+        if obj % 1 == 0:
+            return int(obj)
+        return float(obj)
     return obj
-
 
 
 def build_response(status_code, body):
@@ -33,16 +31,11 @@ def build_response(status_code, body):
             "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
             "Access-Control-Allow-Credentials": "true",
         },
-        "body": json.dumps({
-            "date": today,
-            "dailyPlays": item.get("dailyPlays", 0)
-        }),
+        "body": json.dumps(body),
     }
 
 
-
 def main(event, context):
-
     today = datetime.utcnow().strftime("%Y-%m-%d")
 
     pk = "ANALYTICS#GLOBAL"
@@ -58,15 +51,14 @@ def main(event, context):
     item = response.get("Item")
 
     if not item:
-        return {
-            "statusCode": 200,
-            "body": json.dumps({
-                "date": today,
-                "dailyPlays": 0
-            })
-        }
+        return build_response(200, {
+            "date": today,
+            "dailyPlays": 0
+        })
 
     item = decimal_to_native(item)
 
-    return build_response(200, {"items": items})
-   
+    return build_response(200, {
+        "date": today,
+        "dailyPlays": item.get("dailyPlays", 0)
+    })
