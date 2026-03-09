@@ -47,6 +47,9 @@ output "cloudfront_domain_media" {
 }
 
 
+
+
+
 output "cognito_domain" {
   value = module.cognito.cognito_domain
 }
