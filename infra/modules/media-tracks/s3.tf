@@ -79,7 +79,25 @@ resource "aws_s3_bucket_policy" "tracks" {
         }
       }
     ]
+
   })
+}
+
+
+
+
+#CORS Configuration for s3 bucket
+
+resource "aws_s3_bucket_cors_configuration" "tracks" {
+  bucket = aws_s3_bucket.tracks.id
+
+  cors_rule {
+    allowed_origins = var.allowed_cors_origins
+    allowed_methods = ["PUT", "GET", "HEAD"]
+    allowed_headers = ["*"]
+    expose_headers  = ["ETag"]
+    max_age_seconds = 3000
+  }
 }
 
 

@@ -26,3 +26,9 @@ variable "force_destroy" {
   type    = bool
   default = true
 }
+
+
+variable "allowed_cors_origins" {
+  type        = list(string)
+  description = "Allowed origins for S3 CORS on the tracks bucket"
+}
