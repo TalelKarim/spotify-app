@@ -23,7 +23,7 @@ provider "aws" {
 
 provider "opensearch" {
 
-  url = "https://${module.opensearch.domain_endpoint}"
+  url         = "https://${module.opensearch.domain_endpoint}"
   healthcheck = false
 
 }

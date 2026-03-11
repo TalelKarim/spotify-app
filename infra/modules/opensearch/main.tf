@@ -9,9 +9,9 @@ resource "null_resource" "configure_opensearch_security" {
   depends_on = [
     aws_opensearch_domain.this
   ]
-provisioner "local-exec" {
+  provisioner "local-exec" {
 
-  command = <<EOT
+    command = <<EOT
 
 set -e
 
@@ -49,10 +49,10 @@ sleep 10
 echo "OpenSearch security configured."
 
 EOT
-}
+  }
 
   triggers = {
-    endpoint =  aws_opensearch_domain.this.endpoint
+    endpoint = aws_opensearch_domain.this.endpoint
     # always_run = timestamp()
 
   }
@@ -131,7 +131,7 @@ resource "aws_opensearch_domain" "this" {
 
     master_user_options {
       master_user_name     = "admin"
-      master_user_password = var.master_password 
+      master_user_password = var.master_password
     }
   }
 

@@ -46,6 +46,6 @@ variable "api_role" {
 }
 
 variable "master_password" {
-  type = string
+  type    = string
   default = "SuperPassword123!"
 }
