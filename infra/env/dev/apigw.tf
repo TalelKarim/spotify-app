@@ -944,6 +944,8 @@ resource "aws_api_gateway_deployment" "this" {
     aws_api_gateway_integration.options_play,
     aws_api_gateway_integration.options_track_stats,
     aws_api_gateway_integration.options_me,
+    aws_api_gateway_integration.options_recently_played,
+
     aws_api_gateway_integration.options_me_listening_history,
     aws_api_gateway_integration.options_analytics_global,
     aws_api_gateway_integration.options_search,
