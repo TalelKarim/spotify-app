@@ -21,7 +21,7 @@ locals {
     env = {
       LISTENING_EVENTS_TABLE = module.dynamodb.listening_events_table_name
       TRACKS_TABLE           = module.dynamodb.tracks_table_name
-      CLOUDFRONT_DOMAIN      = module.media.tracks_distribution_domain_name
+      CLOUDFRONT_DOMAIN      = module.media.cloudfront_domain
     }
   }
 
