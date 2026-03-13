@@ -42,6 +42,8 @@ api_get_myhistory:api/get_myhistory
 
 api_create_track:api/create_track
 api_get_me:api/get_me
+api_get_me_recently_played:api/get_me_recently_played
+
 api_get_analytics:api/get_analytics
 api_get_user:api/get_user
 api_start_stream:api/start_stream

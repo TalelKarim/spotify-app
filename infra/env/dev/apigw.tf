@@ -157,6 +157,13 @@ resource "aws_api_gateway_resource" "me_listening_history" {
   path_part   = "history"
 }
 
+
+resource "aws_api_gateway_resource" "me_recently_played" {
+  rest_api_id = module.api_gateway.id
+  parent_id   = aws_api_gateway_resource.me.id
+  path_part   = "recently-played"
+}
+
 # ---------------------------------------------------------
 # GET /me
 # ---------------------------------------------------------
@@ -176,6 +183,31 @@ resource "aws_api_gateway_integration" "get_me" {
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = module.api_lambdas["api_get_me"].invoke_arn
+}
+
+
+
+# ---------------------------------------------------------
+# GET /me/recently-played
+# ---------------------------------------------------------
+
+resource "aws_api_gateway_method" "get_me_recently_played" {
+  rest_api_id   = module.api_gateway.id
+  resource_id   = aws_api_gateway_resource.me_recently_played.id
+  http_method   = "GET"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = module.api_gateway.authorizer_id
+}
+
+
+
+resource "aws_api_gateway_integration" "get_me_recently_played" {
+  rest_api_id             = module.api_gateway.id
+  resource_id             = aws_api_gateway_resource.me_recently_played.id
+  http_method             = aws_api_gateway_method.get_me_recently_played.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = module.api_lambdas["api_get_me_recently_played"].invoke_arn
 }
 
 # ---------------------------------------------------------
@@ -342,6 +374,68 @@ resource "aws_api_gateway_integration_response" "options_tracks_200" {
     "application/json" = ""
   }
 }
+
+
+# ---------------------------------------------------------
+# OPTIONS /me/recently-played
+# ---------------------------------------------------------
+
+
+resource "aws_api_gateway_method" "options_recently_played" {
+  rest_api_id   = module.api_gateway.id
+  resource_id   = aws_api_gateway_resource.me_recently_played.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "options_recently_played" {
+  rest_api_id             = module.api_gateway.id
+  resource_id             = aws_api_gateway_resource.me_recently_played.id
+  http_method             = aws_api_gateway_method.get_me_recently_played.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+resource "aws_api_gateway_method_response" "options_recently_played_200" {
+  rest_api_id             = module.api_gateway.id
+  resource_id             = aws_api_gateway_resource.me_recently_played.id
+  http_method             = aws_api_gateway_method.get_me_recently_played.http_method
+  status_code = "200"
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Headers" = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "options_recently_played_200" {
+  rest_api_id             = module.api_gateway.id
+  resource_id             = aws_api_gateway_resource.me_recently_played.id
+  http_method             = aws_api_gateway_method.get_me_recently_played.http_method
+  status_code = aws_api_gateway_method_response.options_recently_played_200.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = "'${var.frontend_origin}'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+  }
+
+  response_templates = {
+    "application/json" = ""
+  }
+}
+
+
+
+
 
 # ---------------------------------------------------------
 # OPTIONS /tracks/{trackId}
@@ -835,6 +929,7 @@ resource "aws_api_gateway_deployment" "this" {
   depends_on = [
     aws_api_gateway_integration.play_track,
     aws_api_gateway_integration.get_me,
+    aws_api_gateway_integration.get_me_recently_played,
     aws_api_gateway_integration.get_analytics,
     aws_api_gateway_integration.get_track,
     aws_api_gateway_integration.get_tracks,
@@ -871,6 +966,7 @@ resource "aws_api_gateway_deployment" "this" {
       aws_api_gateway_resource.analytics_global.id,
       aws_api_gateway_resource.search.id,
       aws_api_gateway_resource.health.id,
+      aws_api_gateway_resource.me_recently_played.id,
 
       aws_api_gateway_method.post_track.id,
       aws_api_gateway_method.get_tracks.id,
@@ -878,6 +974,7 @@ resource "aws_api_gateway_deployment" "this" {
       aws_api_gateway_method.play_track.id,
       aws_api_gateway_method.get_track_stats.id,
       aws_api_gateway_method.get_me.id,
+      aws_api_gateway_method.get_me_recently_played.id,
       aws_api_gateway_method.get_me_listening_history.id,
       aws_api_gateway_method.get_analytics.id,
       aws_api_gateway_method.search.id,
@@ -888,6 +985,8 @@ resource "aws_api_gateway_deployment" "this" {
       aws_api_gateway_method.options_play.id,
       aws_api_gateway_method.options_track_stats.id,
       aws_api_gateway_method.options_me.id,
+      aws_api_gateway_method.options_recently_played.id,
+
       aws_api_gateway_method.options_me_listening_history.id,
       aws_api_gateway_method.options_analytics_global.id,
       aws_api_gateway_method.options_search.id,

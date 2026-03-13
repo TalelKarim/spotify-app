@@ -123,11 +123,13 @@ def main(event, context):
 
     limit = params.get("limit")
     try:
-        limit = int(limit) if limit else 50
+        limit = int(limit) if limit else 12
     except ValueError:
-        limit = 50
+        limit = 12
 
-    limit = max(1, min(limit, 100))
+    limit = max(1, min(limit, 50))
+
+    fetch_limit = min(max(limit * 5, 25), 200)
 
     pk = f"USER#{user_id}"
 
@@ -136,42 +138,62 @@ def main(event, context):
         KeyConditionExpression="GSI1PK = :pk",
         ExpressionAttributeValues={":pk": pk},
         ScanIndexForward=False,
-        Limit=limit,
+        Limit=fetch_limit,
     )
 
     events = [decimal_to_native(item) for item in resp.get("Items", [])]
 
-    track_ids = []
+    seen = set()
+    unique_events = []
+
     for item in events:
         raw_pk = item.get("PK", "")
+        track_id = raw_pk.replace("TRACK#", "", 1) if raw_pk.startswith("TRACK#") else raw_pk
+
+        if not track_id or track_id in seen:
+            continue
+
+        seen.add(track_id)
+        unique_events.append(item)
+
+        if len(unique_events) >= limit:
+            break
+
+    unique_track_ids = []
+    for item in unique_events:
+        raw_pk = item.get("PK", "")
         if raw_pk.startswith("TRACK#"):
-            track_ids.append(raw_pk.replace("TRACK#", "", 1))
+            unique_track_ids.append(raw_pk.replace("TRACK#", "", 1))
 
-    tracks_by_id = batch_get_tracks(list(dict.fromkeys(track_ids)))
+    tracks_by_id = batch_get_tracks(unique_track_ids)
 
-    clean_items = []
+    items = []
 
-    for item in events:
+    for item in unique_events:
         raw_pk = item.get("PK", "")
         raw_sk = item.get("SK", "")
 
         track_id = raw_pk.replace("TRACK#", "", 1) if raw_pk.startswith("TRACK#") else raw_pk
         played_at = raw_sk.replace("TS#", "", 1) if raw_sk.startswith("TS#") else raw_sk
 
-        track = tracks_by_id.get(track_id, {})
+        track = tracks_by_id.get(track_id)
+        if not track:
+            continue
 
-        clean_items.append({
+        if track.get("status") != "READY":
+            continue
+
+        items.append({
             "trackId": track_id,
-            "playedAt": played_at,
             "title": track.get("title"),
             "artist": track.get("artist"),
             "coverUrl": track.get("coverUrl"),
-            "metadata": item.get("metadata", {})
+            "playedAt": played_at,
         })
 
     body = {
         "userId": user_id,
-        "items": clean_items,
+        "items": items,
     }
 
     return build_response(200, body)
