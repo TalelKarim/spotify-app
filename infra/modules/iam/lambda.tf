@@ -230,6 +230,7 @@ resource "aws_iam_policy" "lambda_events_dynamodb" {
       Effect = "Allow"
       Action = [
         "dynamodb:PutItem",
+        "dynamodb:GetItem",
         "dynamodb:UpdateItem"
       ]
       Resource = var.dynamodb_table_arns.events
