@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import uuid
 import boto3
 from botocore.config import Config
@@ -10,6 +11,7 @@ REGION = os.environ.get("AWS_REGION", "eu-west-1")
 ALLOWED_ORIGIN = os.environ.get("ALLOWED_ORIGIN", "http://localhost:5173")
 
 dynamodb = boto3.resource("dynamodb")
+ddb_client = boto3.client("dynamodb")
 
 s3 = boto3.client(
     "s3",
@@ -26,6 +28,8 @@ BUCKET_NAME = os.environ["TRACKS_BUCKET"]
 
 table = dynamodb.Table(TABLE_NAME)
 
+SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
+
 
 def build_response(status_code, body):
     return {
@@ -37,6 +41,10 @@ def build_response(status_code, body):
             "Access-Control-Allow-Credentials": "true",
         }
     }
+
+
+def normalize_text(value):
+    return " ".join(str(value).strip().lower().split())
 
 
 # -------- AUTH HELPERS --------
@@ -95,9 +103,21 @@ def main(event, context):
     title = body.get("title")
     artist = body.get("artist")
     duration = body.get("duration")
+    audio_hash = (body.get("audioHash") or "").strip().lower()
 
     if not title or not artist:
         return build_response(400, {"error": "Missing required fields"})
+
+    if not audio_hash:
+        return build_response(400, {"error": "Missing audioHash"})
+
+    if not SHA256_RE.match(audio_hash):
+        return build_response(400, {"error": "Invalid audioHash format"})
+
+    try:
+        duration_value = int(duration) if duration is not None else 0
+    except (TypeError, ValueError):
+        return build_response(400, {"error": "Invalid duration"})
 
     # Cover content type
     cover_content_type = body.get("coverContentType", "image/jpeg")
@@ -123,26 +143,97 @@ def main(event, context):
     audio_key = f"tracks/{track_id}.mp3"
     cover_key = f"covers/{track_id}.{cover_ext}"
 
-    upload_expiration = int(time.time()) + (15 * 60)
+    now_ts = int(time.time())
+    now_iso = datetime.utcnow().isoformat() + "Z"
+    upload_expiration = now_ts + (15 * 60)
 
-    # -------- DYNAMODB --------
+    lock_pk = f"AUDIOHASH#{audio_hash}"
 
-    table.put_item(
-        Item={
-            "PK": f"TRACK#{track_id}",
-            "SK": "METADATA",
-            "trackId": track_id,
-            "title": title,
-            "artist": artist,
-            "duration": duration,
-            "objectKey": audio_key,
-            "coverKey": cover_key,
-            "status": "UPLOADING",
-            "plays": 0,
-            "createdAt": datetime.utcnow().isoformat() + "Z",
-            "uploadExpiresAt": upload_expiration
-        }
-    )
+    normalized_title = normalize_text(title)
+    normalized_artist = normalize_text(artist)
+
+    # -------- DYNAMODB TRANSACTION --------
+    # 1) réserve l’unicité du hash
+    # 2) crée le track
+    # le tout atomiquement
+
+    try:
+        ddb_client.transact_write_items(
+            TransactItems=[
+                {
+                    "Put": {
+                        "TableName": TABLE_NAME,
+                        "Item": {
+                            "PK": {"S": lock_pk},
+                            "SK": {"S": "LOCK"},
+                            "entityType": {"S": "AUDIO_HASH_LOCK"},
+                            "audioHash": {"S": audio_hash},
+                            "trackId": {"S": track_id},
+                            "status": {"S": "RESERVED"},
+                            "createdAt": {"S": now_iso},
+                            "expiresAt": {"N": str(upload_expiration)},
+                        },
+                        "ConditionExpression": "attribute_not_exists(PK) OR #status = :invalid OR #expiresAt < :now",
+                        "ExpressionAttributeNames": {
+                            "#status": "status",
+                            "#expiresAt": "expiresAt",
+                        },
+                        "ExpressionAttributeValues": {
+                            ":invalid": {"S": "INVALID"},
+                            ":now": {"N": str(now_ts)},
+                        },
+                    }
+                },
+                {
+                    "Put": {
+                        "TableName": TABLE_NAME,
+                        "Item": {
+                            "PK": {"S": f"TRACK#{track_id}"},
+                            "SK": {"S": "METADATA"},
+                            "entityType": {"S": "TRACK"},
+                            "trackId": {"S": track_id},
+                            "title": {"S": title},
+                            "artist": {"S": artist},
+                            "normalizedTitle": {"S": normalized_title},
+                            "normalizedArtist": {"S": normalized_artist},
+                            "duration": {"N": str(duration_value)},
+                            "objectKey": {"S": audio_key},
+                            "coverKey": {"S": cover_key},
+                            "audioHash": {"S": audio_hash},
+                            "status": {"S": "UPLOADING"},
+                            "plays": {"N": "0"},
+                            "createdAt": {"S": now_iso},
+                            "uploadExpiresAt": {"N": str(upload_expiration)},
+                            "isCanonical": {"BOOL": True},
+                            "duplicateOf": {"NULL": True},
+                        }
+                    }
+                }
+            ]
+        )
+    except ddb_client.exceptions.TransactionCanceledException:
+        # Hash déjà réservé -> on renvoie un 409
+        existing_track_id = None
+
+        try:
+            existing = ddb_client.get_item(
+                TableName=TABLE_NAME,
+                Key={
+                    "PK": {"S": lock_pk},
+                    "SK": {"S": "LOCK"}
+                },
+                ConsistentRead=True
+            ).get("Item")
+
+            if existing and "trackId" in existing:
+                existing_track_id = existing["trackId"]["S"]
+        except Exception:
+            pass
+
+        return build_response(409, {
+            "error": "This audio file already exists on the platform",
+            "existingTrackId": existing_track_id
+        })
 
     # -------- PRESIGNED URL AUDIO --------
 

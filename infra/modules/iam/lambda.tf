@@ -206,7 +206,8 @@ resource "aws_iam_policy" "lambda_api_dynamodb" {
         "dynamodb:Query",
         "dynamodb:Scan",
         "dynamodb:PutItem",
-        "dynamodb:UpdateItem"
+        "dynamodb:UpdateItem",
+        "dynamodb:TransactWriteItems"
       ]
       Resource = concat(
         var.dynamodb_table_arns.api,
