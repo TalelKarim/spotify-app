@@ -233,6 +233,7 @@ resource "aws_iam_policy" "lambda_api_dynamodb" {
         "dynamodb:GetItem",
         "dynamodb:Query",
         "dynamodb:Scan",
+        "dynamodb:BatchGetItem",
         "dynamodb:PutItem",
         "dynamodb:UpdateItem",
         "dynamodb:TransactWriteItems"
