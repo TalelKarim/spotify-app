@@ -91,6 +91,8 @@ locals {
       role = module.iam.lambda_api_role_arn
       env = {
         LISTENING_EVENTS_TABLE = module.dynamodb.listening_events_table_name
+        TRACKS_TABLE           = module.dynamodb.tracks_table_name
+
       }
     }
 
