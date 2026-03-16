@@ -59,6 +59,8 @@ module "event_lambdas" {
   environment_variables = each.value.env
 
   sqs_link = each.value.sqs_link
+  layers = contains(["event_process_track_upload"], each.key) ? [aws_lambda_layer_version.python_mutagen.arn] : []
+
 }
 
 

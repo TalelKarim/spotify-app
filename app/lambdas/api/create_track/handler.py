@@ -26,8 +26,6 @@ s3 = boto3.client(
 TABLE_NAME = os.environ["TRACKS_TABLE"]
 BUCKET_NAME = os.environ["TRACKS_BUCKET"]
 
-table = dynamodb.Table(TABLE_NAME)
-
 SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
 
 
@@ -88,7 +86,6 @@ def require_admin(event):
 # -------- MAIN HANDLER --------
 
 def main(event, context):
-    # Admin check
     deny = require_admin(event)
     if deny:
         return deny
@@ -98,11 +95,8 @@ def main(event, context):
     except Exception:
         return build_response(400, {"error": "Invalid JSON"})
 
-    # -------- VALIDATION --------
-
     title = body.get("title")
     artist = body.get("artist")
-    duration = body.get("duration")
     audio_hash = (body.get("audioHash") or "").strip().lower()
 
     if not title or not artist:
@@ -114,12 +108,6 @@ def main(event, context):
     if not SHA256_RE.match(audio_hash):
         return build_response(400, {"error": "Invalid audioHash format"})
 
-    try:
-        duration_value = int(duration) if duration is not None else 0
-    except (TypeError, ValueError):
-        return build_response(400, {"error": "Invalid duration"})
-
-    # Cover content type
     cover_content_type = body.get("coverContentType", "image/jpeg")
 
     if not cover_content_type.startswith("image/"):
@@ -136,8 +124,6 @@ def main(event, context):
     if not cover_ext:
         return build_response(400, {"error": "Unsupported cover format"})
 
-    # -------- GENERATE IDS --------
-
     track_id = str(uuid.uuid4())
 
     audio_key = f"tracks/{track_id}.mp3"
@@ -151,11 +137,6 @@ def main(event, context):
 
     normalized_title = normalize_text(title)
     normalized_artist = normalize_text(artist)
-
-    # -------- DYNAMODB TRANSACTION --------
-    # 1) réserve l’unicité du hash
-    # 2) crée le track
-    # le tout atomiquement
 
     try:
         ddb_client.transact_write_items(
@@ -196,7 +177,8 @@ def main(event, context):
                             "artist": {"S": artist},
                             "normalizedTitle": {"S": normalized_title},
                             "normalizedArtist": {"S": normalized_artist},
-                            "duration": {"N": str(duration_value)},
+                            # durée réelle calculée plus tard côté process_upload
+                            "duration": {"N": "0"},
                             "objectKey": {"S": audio_key},
                             "coverKey": {"S": cover_key},
                             "audioHash": {"S": audio_hash},
@@ -212,7 +194,6 @@ def main(event, context):
             ]
         )
     except ddb_client.exceptions.TransactionCanceledException:
-        # Hash déjà réservé -> on renvoie un 409
         existing_track_id = None
 
         try:
@@ -235,8 +216,6 @@ def main(event, context):
             "existingTrackId": existing_track_id
         })
 
-    # -------- PRESIGNED URL AUDIO --------
-
     audio_upload_url = s3.generate_presigned_url(
         ClientMethod="put_object",
         Params={
@@ -247,8 +226,6 @@ def main(event, context):
         ExpiresIn=300
     )
 
-    # -------- PRESIGNED URL COVER --------
-
     cover_upload_url = s3.generate_presigned_url(
         ClientMethod="put_object",
         Params={
@@ -258,8 +235,6 @@ def main(event, context):
         },
         ExpiresIn=300
     )
-
-    # -------- RESPONSE --------
 
     return build_response(201, {
         "trackId": track_id,
