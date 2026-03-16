@@ -48,7 +48,7 @@ jobs:
       - name: Upload hashed assets with long cache
         run: |
           aws s3 sync dist/assets s3://${{ vars.FRONTEND_BUCKET_NAME }}/assets \
-            --delete \x
+            --delete \
             --cache-control "public,max-age=31536000,immutable"
 
       - name: Upload other static files with short cache
