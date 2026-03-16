@@ -7,6 +7,11 @@ terraform {
       version = "~> 5.0"
     }
 
+    tls = {
+      source = "hashicorp/tls"
+    }
+
+    
     opensearch = {
       source  = "opensearch-project/opensearch"
       version = "~> 2.0"
