@@ -37,7 +37,7 @@ def mark_track_ready(track_pk, track_sk, actual_hash, duration_seconds):
         UpdateExpression="""
             SET #status = :ready,
                 actualAudioHash = :actual_hash,
-                duration = :duration,
+                "#duration": "duration",
                 validatedAt = :validated_at
             REMOVE uploadExpiresAt, validationError
         """,
@@ -132,7 +132,7 @@ def mark_track_ready_legacy(track_pk, track_sk, actual_hash, duration_seconds):
             SET #status = :ready,
                 audioHash = :audio_hash,
                 actualAudioHash = :actual_hash,
-                duration = :duration,
+                "#duration": "duration",
                 validatedAt = :validated_at
             REMOVE uploadExpiresAt, validationError
         """,

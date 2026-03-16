@@ -77,6 +77,8 @@ export interface RecentlyPlayedItem {
   artist: string;
   coverUrl?: string | null;
   playedAt: string;
+  plays?: number;
+  duration?: number;
 }
 
 export interface RecentlyPlayedResponse {
@@ -99,7 +101,6 @@ export interface MeResponse {
 export interface CreateTrackPayload {
   title: string;
   artist: string;
-  duration: number;
   coverContentType: string;
   audioHash: string;
 }

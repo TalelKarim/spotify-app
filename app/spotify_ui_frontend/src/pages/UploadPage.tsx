@@ -14,7 +14,6 @@ export default function UploadPage() {
 
   const [title, setTitle] = useState('');
   const [artist, setArtist] = useState('');
-  const [duration, setDuration] = useState(180);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [status, setStatus] = useState<string>('');
@@ -41,7 +40,6 @@ export default function UploadPage() {
       const created = await createTrack({
         title,
         artist,
-        duration,
         coverContentType: coverFile.type,
         audioHash,
       });
@@ -119,16 +117,6 @@ export default function UploadPage() {
             />
           </label>
         </div>
-
-        <label className="block space-y-2">
-          <span className="text-sm text-zinc-400">Duration (seconds)</span>
-          <input
-            type="number"
-            value={duration}
-            onChange={(e) => setDuration(Number(e.target.value))}
-            className="w-full rounded-2xl border border-spotify-border bg-[#191919] px-4 py-3 outline-none"
-          />
-        </label>
 
         <div className="grid gap-5 md:grid-cols-2">
           <label className="block space-y-2">
