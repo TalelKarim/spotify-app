@@ -76,6 +76,9 @@ export default function ProfilePage() {
     };
   }, []);
 
+  const rawMemberId = me?.userId ?? me?.sub ?? me?.username ?? '';
+  const memberId = rawMemberId ? rawMemberId.split('-')[0] : '—';
+
   return (
     <div className="space-y-8">
       <div>
@@ -94,7 +97,7 @@ export default function ProfilePage() {
           </div>
           <div className="rounded-2xl bg-black/30 p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Member ID</p>
-            <p className="mt-2 truncate text-base text-zinc-200">{String(me?.sub ?? me?.username ?? '—')}</p>
+            <p className="mt-2 text-base text-zinc-200">{memberId}</p>
           </div>
         </div>
       </section>

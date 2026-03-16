@@ -95,14 +95,14 @@ export default function HomePage() {
       {error && <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">{error}</div>}
 
       {isAuthenticated && recentlyPlayed.length > 0 && (
-        <Section title="Recently played" subtitle="A cleaner snapshot of what you've had on repeat.">
+        <Section title="Recently played">
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {recentlyPlayed.map((track) => <TrackCard key={track.trackId} track={track} />)}
           </div>
         </Section>
       )}
 
-      <Section title="Fresh on the platform" subtitle="New music ready to play now.">
+      <Section title="Fresh on the platform" >
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {tracks.slice(0, 8).map((track) => <TrackCard key={track.trackId} track={track} />)}
         </div>

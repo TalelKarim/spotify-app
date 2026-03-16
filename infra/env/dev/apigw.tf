@@ -749,6 +749,7 @@ resource "aws_api_gateway_method_response" "options_analytics_global_200" {
     "application/json" = "Empty"
   }
 
+
   response_parameters = {
     "method.response.header.Access-Control-Allow-Origin"  = true
     "method.response.header.Access-Control-Allow-Methods" = true
@@ -969,6 +970,7 @@ resource "aws_api_gateway_deployment" "this" {
       aws_api_gateway_resource.search.id,
       aws_api_gateway_resource.health.id,
       aws_api_gateway_resource.me_recently_played.id,
+
 
       aws_api_gateway_method.post_track.id,
       aws_api_gateway_method.get_tracks.id,

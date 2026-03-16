@@ -92,12 +92,12 @@ export interface AnalyticsResponse {
 }
 
 export interface MeResponse {
+  userId?: string;
   sub?: string;
   email?: string;
   username?: string;
   [key: string]: unknown;
 }
-
 export interface CreateTrackPayload {
   title: string;
   artist: string;
