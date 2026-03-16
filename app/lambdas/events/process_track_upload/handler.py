@@ -37,12 +37,13 @@ def mark_track_ready(track_pk, track_sk, actual_hash, duration_seconds):
         UpdateExpression="""
             SET #status = :ready,
                 actualAudioHash = :actual_hash,
-                "#duration": "duration",
+                #duration = :duration,
                 validatedAt = :validated_at
             REMOVE uploadExpiresAt, validationError
         """,
         ExpressionAttributeNames={
-            "#status": "status"
+            "#status": "status",
+            "#duration": "duration"
         },
         ExpressionAttributeValues={
             ":ready": "READY",
@@ -51,6 +52,7 @@ def mark_track_ready(track_pk, track_sk, actual_hash, duration_seconds):
             ":validated_at": datetime.utcnow().isoformat() + "Z"
         }
     )
+
 
 
 def mark_track_invalid(track_pk, track_sk, actual_hash, validation_error):
@@ -124,7 +126,6 @@ def mark_lock_invalid(audio_hash, validation_error):
         }
     )
 
-
 def mark_track_ready_legacy(track_pk, track_sk, actual_hash, duration_seconds):
     table.update_item(
         Key={"PK": track_pk, "SK": track_sk},
@@ -132,12 +133,13 @@ def mark_track_ready_legacy(track_pk, track_sk, actual_hash, duration_seconds):
             SET #status = :ready,
                 audioHash = :audio_hash,
                 actualAudioHash = :actual_hash,
-                "#duration": "duration",
+                #duration = :duration,
                 validatedAt = :validated_at
             REMOVE uploadExpiresAt, validationError
         """,
         ExpressionAttributeNames={
-            "#status": "status"
+            "#status": "status",
+            "#duration": "duration"
         },
         ExpressionAttributeValues={
             ":ready": "READY",
@@ -147,6 +149,7 @@ def mark_track_ready_legacy(track_pk, track_sk, actual_hash, duration_seconds):
             ":validated_at": datetime.utcnow().isoformat() + "Z"
         }
     )
+
 
 
 def process_record(record):
