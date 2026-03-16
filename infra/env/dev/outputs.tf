@@ -47,9 +47,33 @@ output "cloudfront_domain_media" {
 }
 
 
-
-
-
 output "cognito_domain" {
   value = module.cognito.cognito_domain
+}
+
+
+
+
+# frontend outputs :
+
+output "frontend_bucket_name" {
+  value = module.frontend.bucket_name
+}
+
+output "frontend_cloudfront_distribution_id" {
+  value = module.frontend.cloudfront_distribution_id
+}
+
+output "frontend_cloudfront_domain_name" {
+  value = module.frontend.cloudfront_domain_name
+}
+
+
+
+
+
+#github actions 
+
+output "github_actions_frontend_role_arn" {
+  value = aws_iam_role.github_actions_frontend_deploy.arn
 }

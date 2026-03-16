@@ -40,3 +40,19 @@ variable "frontend_origin" {
   type    = string
   default = "http://localhost:5173"
 }
+
+
+
+
+variable "github_owner" {
+  type = string
+}
+
+variable "github_repo" {
+  type = string
+}
+
+variable "github_branch" {
+  type    = string
+  default = "main"
+}
