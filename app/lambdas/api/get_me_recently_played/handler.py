@@ -61,6 +61,21 @@ def extract_user_id(event):
     return None
 
 
+def deserialize_ddb_item(raw_item):
+    item = {}
+    for key, value in raw_item.items():
+        if "S" in value:
+            item[key] = value["S"]
+        elif "N" in value:
+            number = value["N"]
+            item[key] = int(number) if number.isdigit() else float(number)
+        elif "BOOL" in value:
+            item[key] = value["BOOL"]
+        elif "NULL" in value:
+            item[key] = None
+    return item
+
+
 def batch_get_tracks(track_ids):
     if not track_ids:
         return {}
@@ -89,10 +104,7 @@ def batch_get_tracks(track_ids):
         items = response.get("Responses", {}).get(TRACKS_TABLE, [])
 
         for raw_item in items:
-            item = {
-                k: list(v.values())[0] if isinstance(v, dict) and len(v) == 1 else v
-                for k, v in raw_item.items()
-            }
+            item = deserialize_ddb_item(raw_item)
 
             track_id = item.get("trackId")
             if not track_id:
@@ -109,6 +121,8 @@ def batch_get_tracks(track_ids):
                 "artist": item.get("artist"),
                 "coverUrl": build_cloudfront_url(item.get("coverKey")),
                 "status": item.get("status"),
+                "plays": item.get("plays", 0),
+                "duration": item.get("duration"),
             }
 
     return result
@@ -189,6 +203,8 @@ def main(event, context):
             "artist": track.get("artist"),
             "coverUrl": track.get("coverUrl"),
             "playedAt": played_at,
+            "plays": track.get("plays", 0),
+            "duration": track.get("duration"),
         })
 
     body = {
