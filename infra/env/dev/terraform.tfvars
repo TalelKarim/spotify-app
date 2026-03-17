@@ -12,7 +12,7 @@ github_repo   = "spotify-app"
 github_branch = "main"
 
 
-frontend_origin = "https://d1iczhyt55m63l.cloudfront.net"
+frontend_origin = "spotify.talelkarimchebbi.com"
 
 
 root_domain_name     = "talelkarimchebbi.com"
