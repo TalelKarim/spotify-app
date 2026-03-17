@@ -17,13 +17,13 @@ locals {
     }
 
     api_get_me_recently_played = {
-    role = module.iam.lambda_api_role_arn
-    env = {
-      LISTENING_EVENTS_TABLE = module.dynamodb.listening_events_table_name
-      TRACKS_TABLE           = module.dynamodb.tracks_table_name
-      CLOUDFRONT_DOMAIN      = module.media.cloudfront_domain
+      role = module.iam.lambda_api_role_arn
+      env = {
+        LISTENING_EVENTS_TABLE = module.dynamodb.listening_events_table_name
+        TRACKS_TABLE           = module.dynamodb.tracks_table_name
+        CLOUDFRONT_DOMAIN      = module.media.cloudfront_domain
+      }
     }
-  }
 
 
     api_create_track = {
@@ -141,14 +141,14 @@ resource "aws_lambda_permission" "api_permissions" {
 
 
     get_me_recently_played = { lambda = "api_get_me_recently_played", path = "GET/me/recently-played" }
-    get_my_history       = { lambda = "api_get_myhistory", path = "GET/me/listening/history" }
-    get_analytics        = { lambda = "api_get_analytics", path = "GET/analytics/global" }
-    post_track           = { lambda = "api_create_track", path = "POST/tracks" }
-    get_me               = { lambda = "api_get_me", path = "GET/me" }
-    play_track           = { lambda = "api_start_stream", path = "POST/tracks/*/play" }
-    get_user             = { lambda = "api_get_user", path = "GET/users/*" }
-    post_listening_event = { lambda = "api_post_listening_event", path = "POST/events/listening" }
-    search               = { lambda = "api_search", path = "GET/search" }
+    get_my_history         = { lambda = "api_get_myhistory", path = "GET/me/listening/history" }
+    get_analytics          = { lambda = "api_get_analytics", path = "GET/analytics/global" }
+    post_track             = { lambda = "api_create_track", path = "POST/tracks" }
+    get_me                 = { lambda = "api_get_me", path = "GET/me" }
+    play_track             = { lambda = "api_start_stream", path = "POST/tracks/*/play" }
+    get_user               = { lambda = "api_get_user", path = "GET/users/*" }
+    post_listening_event   = { lambda = "api_post_listening_event", path = "POST/events/listening" }
+    search                 = { lambda = "api_search", path = "GET/search" }
   }
 
   statement_id  = "AllowApiGatewayInvoke-${each.key}"

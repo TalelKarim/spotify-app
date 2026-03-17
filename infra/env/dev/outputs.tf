@@ -58,6 +58,16 @@ output "frontend_cloudfront_domain_name" {
 
 
 
+# Root Domains
+
+output "frontend_custom_url" {
+  value = "https://${var.frontend_domain_name}"
+}
+
+output "api_custom_url" {
+  value = "https://${var.api_domain_name}"
+}
+
 
 
 #github actions 

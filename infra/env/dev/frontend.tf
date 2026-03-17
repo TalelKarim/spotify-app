@@ -6,6 +6,7 @@ module "frontend" {
   force_destroy = true
   price_class   = "PriceClass_100"
 
-  aliases             = []
-  acm_certificate_arn = null
+  acm_certificate_arn = aws_acm_certificate_validation.frontend.certificate_arn
+
+  aliases = []
 }

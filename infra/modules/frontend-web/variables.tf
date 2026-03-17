@@ -31,3 +31,9 @@ variable "enable_spa_rewrite" {
   type    = bool
   default = true
 }
+
+
+variable "acm_certificate_arn" {
+  type    = string
+  default = null
+}

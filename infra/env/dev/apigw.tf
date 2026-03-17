@@ -1019,3 +1019,31 @@ resource "aws_api_gateway_stage" "dev" {
     Project     = "spotify-app"
   }
 }
+
+
+
+
+
+# Custom domain pour l'api 
+
+resource "aws_api_gateway_domain_name" "api" {
+  domain_name              = var.api_domain_name
+  regional_certificate_arn = aws_acm_certificate_validation.api.certificate_arn
+  security_policy          = "TLS_1_2"
+
+  endpoint_configuration {
+    types = ["REGIONAL"]
+  }
+
+  tags = {
+    Environment = "dev"
+    Project     = "spotify-app"
+    Component   = "api-custom-domain"
+  }
+}
+
+resource "aws_api_gateway_base_path_mapping" "api" {
+  api_id      = module.api_gateway.id
+  stage_name  = aws_api_gateway_stage.dev.stage_name
+  domain_name = aws_api_gateway_domain_name.api.domain_name
+}

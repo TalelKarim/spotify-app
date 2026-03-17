@@ -56,3 +56,20 @@ variable "github_branch" {
   type    = string
   default = "main"
 }
+
+
+
+variable "root_domain_name" {
+  type    = string
+  default = "talelkarimchebbi.com"
+}
+
+variable "frontend_domain_name" {
+  type    = string
+  default = "spotify.talelkarimchebbi.com"
+}
+
+variable "api_domain_name" {
+  type    = string
+  default = "api.spotify.talelkarimchebbi.com"
+}
