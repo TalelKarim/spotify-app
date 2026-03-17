@@ -22,11 +22,6 @@ variable "aliases" {
   default = []
 }
 
-variable "acm_certificate_arn" {
-  type    = string
-  default = null
-}
-
 variable "enable_spa_rewrite" {
   type    = bool
   default = true
