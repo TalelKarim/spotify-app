@@ -10,3 +10,6 @@ vpc_cidr     = "10.20.0.0/16"
 github_owner  = "TalelKarim"
 github_repo   = "spotify-app"
 github_branch = "main"
+
+
+frontend_origin="https://d1iczhyt55m63l.cloudfront.net"
