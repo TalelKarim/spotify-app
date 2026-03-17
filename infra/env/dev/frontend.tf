@@ -8,5 +8,5 @@ module "frontend" {
 
   acm_certificate_arn = aws_acm_certificate_validation.frontend.certificate_arn
 
-  aliases = []
+  aliases = [var.frontend_domain_name]
 }
