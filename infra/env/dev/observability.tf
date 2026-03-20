@@ -37,8 +37,9 @@ module "monitoring_api" {
   api_stage_name   = var.api_stage_name
   alarm_topic_arn  = module.observability_core.sns_topic_arn
 
-  frontend_distribution_id             = module.frontend.distribution_id
-  media_distribution_id                = module.media.distribution_id
+
+  frontend_distribution_id             = module.frontend.cloudfront_distribution_id
+  media_distribution_id                = module.media.cloudfront_distribution_id
   cloudfront_function_name             = module.frontend.cloudfront_function_name
   enable_cloudfront_additional_metrics = var.enable_cloudfront_additional_metrics
 }
@@ -54,7 +55,7 @@ module "monitoring_compute_data" {
   alarm_topic_arn       = module.observability_core.sns_topic_arn
 
   dlq_queue_name                        = module.listening_events_queue.dlq_queue_name
-  state_machine_arn                     = module.step_functions.state_machine_arn
+  state_machine_arn                     = module.listening_analytics.state_machine_arn
   event_bus_name                        = module.eventbridge_bus.bus_name
   eventbridge_rule_names                = [module.rule_track_played_to_sqs.rule_name, module.rule_track_played_to_stepfn.rule_name]
   opensearch_domain_name                = module.opensearch.domain_name
