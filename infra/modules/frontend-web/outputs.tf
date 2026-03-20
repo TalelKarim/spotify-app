@@ -7,7 +7,7 @@ output "bucket_arn" {
 }
 
 output "cloudfront_function_name" {
-  value = aws_cloudfront_function[0].spa_rewrite.name
+  value = aws_cloudfront_function.spa_rewrite[0].name
 }
 
 
