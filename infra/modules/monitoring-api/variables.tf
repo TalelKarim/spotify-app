@@ -17,3 +17,22 @@ variable "api_stage_name" {
 variable "alarm_topic_arn" {
   type = string
 }
+
+
+variable "frontend_distribution_id" {
+  type = string
+}
+
+variable "media_distribution_id" {
+  type = string
+}
+
+variable "cloudfront_function_name" {
+  type    = string
+  default = null
+}
+
+variable "enable_cloudfront_additional_metrics" {
+  type    = bool
+  default = false
+}

@@ -9,3 +9,8 @@ output "domain_endpoint" {
 }
 
 
+output "domain_name" {
+  description = "Nom du domaine OpenSearch"
+  value       = aws_opensearch_domain.this.domain_name
+}
+

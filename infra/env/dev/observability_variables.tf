@@ -30,3 +30,13 @@ variable "dynamodb_table_names" {
   type        = list(string)
   description = "Liste exacte des tables DynamoDB à monitorer."
 }
+
+variable "enable_cloudfront_additional_metrics" {
+  type    = bool
+  default = false
+}
+
+variable "opensearch_free_storage_threshold_mib" {
+  type    = number
+  default = 20480
+}

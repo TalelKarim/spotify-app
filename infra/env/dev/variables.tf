@@ -83,3 +83,15 @@ output "observability_dashboard_name" {
 output "observability_sns_topic_arn" {
   value = module.observability_core.sns_topic_arn
 }
+
+
+
+
+#Observability phase2
+output "edge_access_dashboard_name" {
+  value = module.observability_core.edge_access_dashboard_name
+}
+
+output "async_search_dashboard_name" {
+  value = module.observability_core.async_search_dashboard_name
+}
