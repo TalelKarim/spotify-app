@@ -31,6 +31,7 @@ module "monitoring_api" {
     aws.us_east_1 = aws.us_east_1
   }
 
+
   project          = "spotify-app"
   env              = "dev"
   api_gateway_name = var.api_gateway_name

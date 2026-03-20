@@ -78,20 +78,25 @@ locals {
       }
     }
   ]
-
-  eventbridge_delivery_metrics = flatten([
-    for rule in var.eventbridge_rule_names : [
-      ["AWS/Events", "InvocationAttempts", "EventBusName", var.event_bus_name, "RuleName", rule, { "label" : "${rule} attempts", "stat" : "Sum" }],
-      ["AWS/Events", "SuccessfulInvocationAttempts", "EventBusName", var.event_bus_name, "RuleName", rule, { "label" : "${rule} success", "stat" : "Sum" }],
-      ["AWS/Events", "FailedInvocations", "EventBusName", var.event_bus_name, "RuleName", rule, { "label" : "${rule} failed", "stat" : "Sum" }]
+  eventbridge_delivery_metrics = concat(
+    [
+      for rule in var.eventbridge_rule_names :
+      ["AWS/Events", "InvocationAttempts", "EventBusName", var.event_bus_name, "RuleName", rule, { label = "${rule} attempts", stat = "Sum" }]
+    ],
+    [
+      for rule in var.eventbridge_rule_names :
+      ["AWS/Events", "SuccessfulInvocationAttempts", "EventBusName", var.event_bus_name, "RuleName", rule, { label = "${rule} success", stat = "Sum" }]
+    ],
+    [
+      for rule in var.eventbridge_rule_names :
+      ["AWS/Events", "FailedInvocations", "EventBusName", var.event_bus_name, "RuleName", rule, { label = "${rule} failed", stat = "Sum" }]
     ]
-  ])
+  )
 
-  eventbridge_latency_metrics = flatten([
-    for rule in var.eventbridge_rule_names : [
-      ["AWS/Events", "IngestionToInvocationSuccessLatency", "EventBusName", var.event_bus_name, "RuleName", rule, { "label" : "${rule} success latency p95", "stat" : "p95" }]
-    ]
-  ])
+  eventbridge_latency_metrics = [
+    for rule in var.eventbridge_rule_names :
+    ["AWS/Events", "IngestionToInvocationSuccessLatency", "EventBusName", var.event_bus_name, "RuleName", rule, { label = "${rule} success latency p95", stat = "p95" }]
+  ]
 
   opensearch_cluster_status_metrics = [
     ["AWS/ES", "ClusterStatus.green", "DomainName", var.opensearch_domain_name, "ClientId", data.aws_caller_identity.current.account_id, { "label" : "green", "stat" : "Maximum" }],
