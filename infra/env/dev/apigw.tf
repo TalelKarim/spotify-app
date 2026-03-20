@@ -1014,10 +1014,38 @@ resource "aws_api_gateway_stage" "dev" {
 
   xray_tracing_enabled = true
 
+  access_log_settings {
+    destination_arn = module.monitoring_api.api_gateway_access_log_group_arn
+
+    format = jsonencode({
+      requestId           = "$context.requestId"
+      extendedRequestId   = "$context.extendedRequestId"
+      ip                  = "$context.identity.sourceIp"
+      caller              = "$context.identity.caller"
+      user                = "$context.identity.user"
+      requestTime         = "$context.requestTime"
+      httpMethod          = "$context.httpMethod"
+      resourcePath        = "$context.resourcePath"
+      status              = "$context.status"
+      protocol            = "$context.protocol"
+      responseLength      = "$context.responseLength"
+      responseLatency     = "$context.responseLatency"
+      integrationLatency  = "$context.integration.latency"
+      errorMessage        = "$context.error.message"
+      errorResponseType   = "$context.error.responseType"
+      authorizerPrincipal = "$context.authorizer.principalId"
+      userAgent           = "$context.identity.userAgent"
+    })
+  }
+
   tags = {
     Environment = "dev"
     Project     = "spotify-app"
   }
+
+  depends_on = [
+    module.monitoring_api
+  ]
 }
 
 

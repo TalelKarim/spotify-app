@@ -73,3 +73,13 @@ variable "api_domain_name" {
   type    = string
   default = "api.spotify.talelkarimchebbi.com"
 }
+
+
+
+output "observability_dashboard_name" {
+  value = module.observability_core.dashboard_name
+}
+
+output "observability_sns_topic_arn" {
+  value = module.observability_core.sns_topic_arn
+}
