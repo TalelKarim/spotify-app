@@ -1,4 +1,5 @@
 resource "aws_cloudfront_monitoring_subscription" "frontend" {
+  provider        = aws.us_east_1
   count           = var.enable_cloudfront_additional_metrics ? 1 : 0
   distribution_id = var.frontend_distribution_id
 
@@ -10,6 +11,7 @@ resource "aws_cloudfront_monitoring_subscription" "frontend" {
 }
 
 resource "aws_cloudfront_monitoring_subscription" "media" {
+  provider        = aws.us_east_1
   count           = var.enable_cloudfront_additional_metrics ? 1 : 0
   distribution_id = var.media_distribution_id
 

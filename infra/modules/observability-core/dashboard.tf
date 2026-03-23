@@ -81,21 +81,21 @@ locals {
   eventbridge_delivery_metrics = concat(
     [
       for rule in var.eventbridge_rule_names :
-      ["AWS/Events", "InvocationAttempts", "EventBusName", var.event_bus_name, "RuleName", rule, { label = "${rule} attempts", stat = "Sum" }]
+      ["AWS/Events", "InvocationAttempts", "EventBusName", var.event_bus_name, "RuleName", rule]
     ],
     [
       for rule in var.eventbridge_rule_names :
-      ["AWS/Events", "SuccessfulInvocationAttempts", "EventBusName", var.event_bus_name, "RuleName", rule, { label = "${rule} success", stat = "Sum" }]
+      ["AWS/Events", "SuccessfulInvocationAttempts", "EventBusName", var.event_bus_name, "RuleName", rule]
     ],
     [
       for rule in var.eventbridge_rule_names :
-      ["AWS/Events", "FailedInvocations", "EventBusName", var.event_bus_name, "RuleName", rule, { label = "${rule} failed", stat = "Sum" }]
+      ["AWS/Events", "FailedInvocations", "EventBusName", var.event_bus_name, "RuleName", rule]
     ]
   )
 
   eventbridge_latency_metrics = [
     for rule in var.eventbridge_rule_names :
-    ["AWS/Events", "IngestionToInvocationSuccessLatency", "EventBusName", var.event_bus_name, "RuleName", rule, { label = "${rule} success latency p95", stat = "p95" }]
+    ["AWS/Events", "IngestionToInvocationSuccessLatency", "EventBusName", var.event_bus_name, "RuleName", rule]
   ]
 
   opensearch_cluster_status_metrics = [
