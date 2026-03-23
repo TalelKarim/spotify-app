@@ -26,11 +26,6 @@ module "observability_core" {
 module "monitoring_api" {
   source = "../../modules/monitoring-api"
 
-  providers = {
-    aws           = aws
-    aws.us_east_1 = aws.us_east_1
-  }
-
 
   project          = "spotify-app"
   env              = "dev"
