@@ -19,6 +19,12 @@ variable "alarm_topic_arn" {
 }
 
 
+
+# cloudfront sns 
+variable "cloudfront_alarm_topic_arn" {
+  type = string
+}
+
 variable "frontend_distribution_id" {
   type = string
 }

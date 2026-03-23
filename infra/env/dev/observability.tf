@@ -27,11 +27,12 @@ module "monitoring_api" {
   source = "../../modules/monitoring-api"
 
 
-  project          = "spotify-app"
-  env              = "dev"
-  api_gateway_name = var.api_gateway_name
-  api_stage_name   = var.api_stage_name
-  alarm_topic_arn  = aws_sns_topic.cloudfront_alerts.arn
+  project                    = "spotify-app"
+  env                        = "dev"
+  api_gateway_name           = var.api_gateway_name
+  api_stage_name             = var.api_stage_name
+  alarm_topic_arn            = module.observability_core.sns_topic_arn
+  cloudfront_alarm_topic_arn = aws_sns_topic.cloudfront_alerts.arn
 
 
   frontend_distribution_id             = module.frontend.cloudfront_distribution_id

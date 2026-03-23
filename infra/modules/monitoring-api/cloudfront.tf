@@ -40,7 +40,7 @@ resource "aws_cloudwatch_metric_alarm" "frontend_cloudfront_5xx" {
     Region         = "Global"
   }
 
-  alarm_actions = [var.alarm_topic_arn]
+  alarm_actions = [var.cloudfront_alarm_topic_arn]
 }
 
 resource "aws_cloudwatch_metric_alarm" "media_cloudfront_5xx" {
@@ -61,7 +61,7 @@ resource "aws_cloudwatch_metric_alarm" "media_cloudfront_5xx" {
     Region         = "Global"
   }
 
-  alarm_actions = [var.alarm_topic_arn]
+  alarm_actions = [var.cloudfront_alarm_topic_arn]
 }
 
 resource "aws_cloudwatch_metric_alarm" "frontend_cloudfront_origin_latency" {
@@ -83,7 +83,7 @@ resource "aws_cloudwatch_metric_alarm" "frontend_cloudfront_origin_latency" {
     Region         = "Global"
   }
 
-  alarm_actions = [var.alarm_topic_arn]
+  alarm_actions = [var.cloudfront_alarm_topic_arn]
 
   depends_on = [aws_cloudfront_monitoring_subscription.frontend]
 }
@@ -107,7 +107,7 @@ resource "aws_cloudwatch_metric_alarm" "media_cloudfront_origin_latency" {
     Region         = "Global"
   }
 
-  alarm_actions = [var.alarm_topic_arn]
+  alarm_actions = [var.cloudfront_alarm_topic_arn]
 
   depends_on = [aws_cloudfront_monitoring_subscription.media]
 }
@@ -131,7 +131,7 @@ resource "aws_cloudwatch_metric_alarm" "cloudfront_function_execution_errors" {
     Region       = "Global"
   }
 
-  alarm_actions = [var.alarm_topic_arn]
+  alarm_actions = [var.cloudfront_alarm_topic_arn]
 }
 
 resource "aws_cloudwatch_metric_alarm" "cloudfront_function_validation_errors" {
@@ -153,5 +153,5 @@ resource "aws_cloudwatch_metric_alarm" "cloudfront_function_validation_errors" {
     Region       = "Global"
   }
 
-  alarm_actions = [var.alarm_topic_arn]
+  alarm_actions = [var.cloudfront_alarm_topic_arn]
 }
