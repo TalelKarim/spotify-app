@@ -9,7 +9,7 @@ module "listening_analytics" {
   include_execution_data = false
   xray_tracing_enabled   = true
 
-  
+
   definition = jsonencode({
     StartAt = "UpdateTrackStats"
     States = {
