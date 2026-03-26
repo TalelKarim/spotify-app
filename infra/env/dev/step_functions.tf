@@ -4,6 +4,12 @@ module "listening_analytics" {
   name     = "spotify-dev-listening-analytics"
   role_arn = module.iam.step_functions_role_arn
 
+  log_retention_days     = 14
+  log_level              = "ERROR"
+  include_execution_data = false
+  xray_tracing_enabled   = true
+
+  
   definition = jsonencode({
     StartAt = "UpdateTrackStats"
     States = {

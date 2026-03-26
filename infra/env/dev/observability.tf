@@ -12,6 +12,19 @@ module "observability_core" {
   sqs_queue_name        = var.sqs_queue_name
   dynamodb_table_names  = var.dynamodb_table_names
 
+
+ lambda_log_group_names = concat(
+    [for m in values(module.api_lambdas) : m.log_group_name],
+    [for m in values(module.event_lambdas) : m.log_group_name],
+    [for m in values(module.orchestration_lambdas) : m.log_group_name],
+    [for m in values(module.tech_lambdas) : m.log_group_name]
+  )
+
+
+  api_access_log_group_name  = module.monitoring_api.api_gateway_access_log_group_name
+
+  step_functions_log_group_name = module.listening_analytics.log_group_name
+
   frontend_distribution_id             = module.frontend.cloudfront_distribution_id
   media_distribution_id                = module.media.cloudfront_distribution_id
   cloudfront_function_name             = module.frontend.cloudfront_function_name

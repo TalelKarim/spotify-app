@@ -23,7 +23,6 @@ resource "aws_lambda_function" "this" {
 
   layers = var.layers
 
-
   dynamic "vpc_config" {
     for_each = length(var.subnet_ids) > 0 && length(var.security_group_ids) > 0 ? [1] : []
     content {
@@ -32,4 +31,14 @@ resource "aws_lambda_function" "this" {
     }
   }
 
+  tracing_config {
+    mode = var.tracing_mode
+  }
+
+  logging_config {
+    log_format            = var.log_format
+    application_log_level = var.application_log_level
+    system_log_level      = var.system_log_level
+    log_group             = aws_cloudwatch_log_group.this.name
+  }
 }

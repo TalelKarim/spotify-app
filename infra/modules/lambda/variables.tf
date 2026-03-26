@@ -78,3 +78,27 @@ variable "log_retention_days" {
   type    = number
   default = 1
 }
+
+
+
+
+# Monitoring conf 
+variable "tracing_mode" {
+  type    = string
+  default = "Active"
+}
+
+variable "log_format" {
+  type    = string
+  default = "JSON"
+}
+
+variable "application_log_level" {
+  type    = string
+  default = "INFO"
+}
+
+variable "system_log_level" {
+  type    = string
+  default = "WARN"
+}

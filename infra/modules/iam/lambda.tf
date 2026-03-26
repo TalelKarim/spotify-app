@@ -307,6 +307,54 @@ resource "aws_iam_policy" "lambda_xray" {
   })
 }
 
+
+
+############################
+# Step Functions- Logging / Xray
+############################
+
+
+
+resource "aws_iam_policy" "step_functions_logging" {
+  name = "${var.project_name}-step-functions-logging"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "logs:CreateLogDelivery",
+        "logs:GetLogDelivery",
+        "logs:UpdateLogDelivery",
+        "logs:DeleteLogDelivery",
+        "logs:ListLogDeliveries",
+        "logs:PutResourcePolicy",
+        "logs:DescribeResourcePolicies",
+        "logs:DescribeLogGroups"
+      ]
+      Resource = "*"
+    }]
+  })
+}
+
+resource "aws_iam_policy" "step_functions_xray" {
+  name = "${var.project_name}-step-functions-xray"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "xray:PutTraceSegments",
+        "xray:PutTelemetryRecords",
+        "xray:GetSamplingRules",
+        "xray:GetSamplingTargets"
+      ]
+      Resource = "*"
+    }]
+  })
+}
+
 ############################
 # IAM Policy - KMS (minimal)
 ############################
@@ -376,11 +424,11 @@ resource "aws_iam_role_policy_attachment" "events_logs" {
 
 
 
-resource "aws_iam_role_policy_attachment" "steps_logs" {
-  role       = aws_iam_role.lambda_step_functions.name
-  policy_arn = aws_iam_policy.lambda_logs.arn
-}
 
+resource "aws_iam_role_policy_attachment" "step_functions_logging" {
+  role       = aws_iam_role.lambda_step_functions.name
+  policy_arn = aws_iam_policy.step_functions_logging.arn
+}
 
 
 resource "aws_iam_role_policy_attachment" "tech_logs" {
@@ -409,9 +457,9 @@ resource "aws_iam_role_policy_attachment" "events_xray" {
   policy_arn = aws_iam_policy.lambda_xray.arn
 }
 
-resource "aws_iam_role_policy_attachment" "steps_xray" {
+resource "aws_iam_role_policy_attachment" "step_functions_xray" {
   role       = aws_iam_role.lambda_step_functions.name
-  policy_arn = aws_iam_policy.lambda_xray.arn
+  policy_arn = aws_iam_policy.step_functions_xray.arn
 }
 
 

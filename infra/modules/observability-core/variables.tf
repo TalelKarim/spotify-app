@@ -80,3 +80,22 @@ output "edge_access_dashboard_name" {
 output "async_search_dashboard_name" {
   value = aws_cloudwatch_dashboard.async_search.dashboard_name
 }
+
+
+
+
+
+# insights
+
+variable "lambda_log_group_names" {
+  type = list(string)
+}
+
+variable "api_access_log_group_name" {
+  type = string
+}
+
+variable "step_functions_log_group_name" {
+  type = string
+}
+
