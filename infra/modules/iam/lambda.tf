@@ -2,6 +2,23 @@
 # IAM Roles
 ############################
 
+resource "aws_iam_role" "step_functions" {
+  name = "${var.project_name}-step-functions-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "states.amazonaws.com"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+
+
 resource "aws_iam_role" "lambda_api" {
   name = "${var.project_name}-lambda-api-role"
 
@@ -140,6 +157,35 @@ data "aws_iam_policy_document" "lambda_api_search" {
 }
 
 
+
+############################
+# Logging for the step functions 
+############################
+
+
+resource "aws_iam_policy" "step_functions_logging" {
+  name = "${var.project_name}-step-functions-logging"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "logs:CreateLogDelivery",
+        "logs:CreateLogStream",
+        "logs:GetLogDelivery",
+        "logs:UpdateLogDelivery",
+        "logs:DeleteLogDelivery",
+        "logs:ListLogDeliveries",
+        "logs:PutLogEvents",
+        "logs:PutResourcePolicy",
+        "logs:DescribeResourcePolicies",
+        "logs:DescribeLogGroups"
+      ]
+      Resource = "*"
+    }]
+  })
+}
 
 
 ############################
@@ -308,53 +354,6 @@ resource "aws_iam_policy" "lambda_xray" {
 }
 
 
-
-############################
-# Step Functions- Logging / Xray
-############################
-
-
-
-resource "aws_iam_policy" "step_functions_logging" {
-  name = "${var.project_name}-step-functions-logging"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Action = [
-        "logs:CreateLogDelivery",
-        "logs:GetLogDelivery",
-        "logs:UpdateLogDelivery",
-        "logs:DeleteLogDelivery",
-        "logs:ListLogDeliveries",
-        "logs:PutResourcePolicy",
-        "logs:DescribeResourcePolicies",
-        "logs:DescribeLogGroups"
-      ]
-      Resource = "*"
-    }]
-  })
-}
-
-resource "aws_iam_policy" "step_functions_xray" {
-  name = "${var.project_name}-step-functions-xray"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Action = [
-        "xray:PutTraceSegments",
-        "xray:PutTelemetryRecords",
-        "xray:GetSamplingRules",
-        "xray:GetSamplingTargets"
-      ]
-      Resource = "*"
-    }]
-  })
-}
-
 ############################
 # IAM Policy - KMS (minimal)
 ############################
@@ -424,17 +423,24 @@ resource "aws_iam_role_policy_attachment" "events_logs" {
 
 
 
-
-resource "aws_iam_role_policy_attachment" "step_functions_logging" {
+resource "aws_iam_role_policy_attachment" "steps_logs" {
   role       = aws_iam_role.lambda_step_functions.name
-  policy_arn = aws_iam_policy.step_functions_logging.arn
+  policy_arn = aws_iam_policy.lambda_logs.arn
 }
+
 
 
 resource "aws_iam_role_policy_attachment" "tech_logs" {
   role       = aws_iam_role.lambda_tech.name
   policy_arn = aws_iam_policy.lambda_logs.arn
 }
+
+
+resource "aws_iam_role_policy_attachment" "step_functions_logging" {
+  role       = aws_iam_role.step_functions.name
+  policy_arn = aws_iam_policy.step_functions_logging.arn
+}
+
 #sqs
 
 resource "aws_iam_role_policy_attachment" "sqs_access" {
@@ -457,9 +463,9 @@ resource "aws_iam_role_policy_attachment" "events_xray" {
   policy_arn = aws_iam_policy.lambda_xray.arn
 }
 
-resource "aws_iam_role_policy_attachment" "step_functions_xray" {
+resource "aws_iam_role_policy_attachment" "steps_xray" {
   role       = aws_iam_role.lambda_step_functions.name
-  policy_arn = aws_iam_policy.step_functions_xray.arn
+  policy_arn = aws_iam_policy.lambda_xray.arn
 }
 
 
@@ -470,7 +476,10 @@ resource "aws_iam_role_policy_attachment" "tech_xray" {
   policy_arn = aws_iam_policy.lambda_xray.arn
 }
 
-
+resource "aws_iam_role_policy_attachment" "step_functions_xray" {
+  role       = aws_iam_role.step_functions.name
+  policy_arn = aws_iam_policy.step_functions_xray.arn
+}
 
 
 #s3

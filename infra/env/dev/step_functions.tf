@@ -2,7 +2,7 @@ module "listening_analytics" {
   source = "../../modules/step-functions"
 
   name     = "spotify-dev-listening-analytics"
-  role_arn = module.iam.step_functions_role_arn
+  role_arn = module.iam.state_machine_entity_role_arn
 
   log_retention_days     = 14
   log_level              = "ERROR"
