@@ -163,29 +163,6 @@ data "aws_iam_policy_document" "lambda_api_search" {
 ############################
 
 
-resource "aws_iam_policy" "step_functions_logging" {
-  name = "${var.project_name}-step-functions-logging"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Action = [
-        "logs:CreateLogDelivery",
-        "logs:CreateLogStream",
-        "logs:GetLogDelivery",
-        "logs:UpdateLogDelivery",
-        "logs:DeleteLogDelivery",
-        "logs:ListLogDeliveries",
-        "logs:PutLogEvents",
-        "logs:PutResourcePolicy",
-        "logs:DescribeResourcePolicies",
-        "logs:DescribeLogGroups"
-      ]
-      Resource = "*"
-    }]
-  })
-}
 
 
 ############################
@@ -436,10 +413,6 @@ resource "aws_iam_role_policy_attachment" "tech_logs" {
 }
 
 
-resource "aws_iam_role_policy_attachment" "step_functions_logging" {
-  role       = aws_iam_role.step_functions.name
-  policy_arn = aws_iam_policy.step_functions_logging.arn
-}
 
 #sqs
 
@@ -474,11 +447,6 @@ resource "aws_iam_role_policy_attachment" "steps_xray" {
 resource "aws_iam_role_policy_attachment" "tech_xray" {
   role       = aws_iam_role.lambda_tech.name
   policy_arn = aws_iam_policy.lambda_xray.arn
-}
-
-resource "aws_iam_role_policy_attachment" "step_functions_xray" {
-  role       = aws_iam_role.step_functions.name
-  policy_arn = aws_iam_policy.step_functions_xray.arn
 }
 
 
