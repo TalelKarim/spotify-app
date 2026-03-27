@@ -5,7 +5,7 @@ module "listening_analytics" {
   role_arn = module.iam.state_machine_entity_role_arn
 
   log_retention_days     = 14
-  log_level              = "ERROR"
+  log_level              = "ALL"
   include_execution_data = false
   xray_tracing_enabled   = true
 
