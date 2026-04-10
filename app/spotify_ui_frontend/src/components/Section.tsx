@@ -1,3 +1,5 @@
+import { Label } from './Label';
+
 export function Section({
   title,
   subtitle,
@@ -10,15 +12,17 @@ export function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="space-y-5">
+    <section className="space-y-6 animate-fade-in">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
-          {subtitle && <p className="mt-1 text-sm text-zinc-400">{subtitle}</p>}
+          <Label variant="subheading" weight="bold" className="bg-gradient-to-r from-spotify-green to-spotify-cyan bg-clip-text text-transparent">
+            {title}
+          </Label>
+          {subtitle && <Label variant="caption" color="secondary" className="mt-2">{subtitle}</Label>}
         </div>
-        {action}
+        {action && <div className="flex-shrink-0">{action}</div>}
       </div>
-      {children}
+      <div className="animate-slide-up">{children}</div>
     </section>
   );
 }

@@ -2,45 +2,105 @@ import { Disc3, Home, Search, Upload, User } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { env } from '../lib/env';
+import { Surface } from './Surface';
+import { Label } from './Label';
 
-const base = 'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition';
+const navItemBase = 'flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all duration-200';
 
 export function Sidebar() {
   const { isAdmin } = useAuth();
 
   return (
-    <aside className="flex h-full w-64 flex-col gap-4 rounded-3xl border border-spotify-border bg-gradient-to-b from-[#181818] to-[#101010] p-4 shadow-soft">
-      <div className="flex items-center gap-3 px-2 py-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-spotify-green/20 text-spotify-green">
-          <Disc3 className="h-6 w-6" />
+    <aside className="flex h-full w-64 flex-col gap-4 animate-fade-in">
+      {/* Logo Section */}
+      <Surface elevation="raised" background="dark" rounded="2xl" padding="md" border={true} className="h-fit">
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-spotify text-black shadow-glow-green">
+            <Disc3 className="h-6 w-6 font-bold" />
+          </div>
+          <div className="flex-1">
+            <Label variant="caption" weight="semibold" color="secondary" className="block uppercase tracking-wider">
+              {env.appName}
+            </Label>
+            <Label variant="label" weight="bold" className="block mt-0.5">
+              Listening Club
+            </Label>
+          </div>
         </div>
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Listening club</p>
-          <h1 className="text-lg font-semibold">{env.appName}</h1>
-        </div>
-      </div>
+      </Surface>
 
-      <nav className="flex flex-1 flex-col gap-2">
-        <NavLink to="/" className={({ isActive }) => `${base} ${isActive ? 'bg-spotify-hover text-white' : 'text-zinc-300 hover:bg-spotify-hover hover:text-white'}`}>
-          <Home className="h-5 w-5" /> Home
-        </NavLink>
-        <NavLink to="/search" className={({ isActive }) => `${base} ${isActive ? 'bg-spotify-hover text-white' : 'text-zinc-300 hover:bg-spotify-hover hover:text-white'}`}>
-          <Search className="h-5 w-5" /> Search
-        </NavLink>
-        <NavLink to="/me" className={({ isActive }) => `${base} ${isActive ? 'bg-spotify-hover text-white' : 'text-zinc-300 hover:bg-spotify-hover hover:text-white'}`}>
-          <User className="h-5 w-5" /> Profile
-        </NavLink>
-        {isAdmin && (
-          <NavLink to="/upload" className={({ isActive }) => `${base} ${isActive ? 'bg-spotify-hover text-white' : 'text-zinc-300 hover:bg-spotify-hover hover:text-white'}`}>
-            <Upload className="h-5 w-5" /> Studio
+      {/* Navigation */}
+      <Surface elevation="flat" background="transparent" rounded="xl" padding="sm" border={false} className="flex flex-1 flex-col gap-1">
+        <nav className="space-y-1">
+          <NavLink
+            to="/"
+            className={({ isActive }) =>
+              `${navItemBase} ${
+                isActive
+                  ? 'bg-gradient-spotify text-black font-bold shadow-glow-green'
+                  : 'text-zinc-300 hover:bg-white/10 hover:text-white'
+              }`
+            }
+          >
+            <Home className="h-5 w-5 flex-shrink-0" />
+            <span>Home</span>
           </NavLink>
-        )}
-      </nav>
 
-      <div className="rounded-2xl border border-spotify-border bg-black/30 p-4 text-sm text-zinc-400">
-        <p className="mb-2 text-xs uppercase tracking-[0.2em] text-zinc-500">Good to know</p>
-        <p>Discover new songs, jump back into your latest listens and keep everything within one polished player.</p>
-      </div>
+          <NavLink
+            to="/search"
+            className={({ isActive }) =>
+              `${navItemBase} ${
+                isActive
+                  ? 'bg-gradient-spotify text-black font-bold shadow-glow-green'
+                  : 'text-zinc-300 hover:bg-white/10 hover:text-white'
+              }`
+            }
+          >
+            <Search className="h-5 w-5 flex-shrink-0" />
+            <span>Search</span>
+          </NavLink>
+
+          <NavLink
+            to="/me"
+            className={({ isActive }) =>
+              `${navItemBase} ${
+                isActive
+                  ? 'bg-gradient-spotify text-black font-bold shadow-glow-green'
+                  : 'text-zinc-300 hover:bg-white/10 hover:text-white'
+              }`
+            }
+          >
+            <User className="h-5 w-5 flex-shrink-0" />
+            <span>Profile</span>
+          </NavLink>
+
+          {isAdmin && (
+            <NavLink
+              to="/upload"
+              className={({ isActive }) =>
+                `${navItemBase} ${
+                  isActive
+                    ? 'bg-gradient-spotify text-black font-bold shadow-glow-green'
+                    : 'text-zinc-300 hover:bg-white/10 hover:text-white'
+                }`
+              }
+            >
+              <Upload className="h-5 w-5 flex-shrink-0" />
+              <span>Studio</span>
+            </NavLink>
+          )}
+        </nav>
+      </Surface>
+
+      {/* Info Card */}
+      <Surface elevation="raised" background="gradient" rounded="xl" padding="md" border={true} className="h-fit">
+        <Label variant="caption" weight="semibold" color="success" className="uppercase tracking-wider block mb-2">
+          💡 Pro Tip
+        </Label>
+        <Label variant="caption" color="secondary">
+          Explore new vibes, revisit your recent plays, and enjoy seamless streaming in one beautiful interface.
+        </Label>
+      </Surface>
     </aside>
   );
 }

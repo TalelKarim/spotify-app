@@ -2,58 +2,45 @@
 
 ```mermaid
 graph TB
-    %% Users and Frontend
-    User[👤 User] --> CloudFront_Frontend[🌐 CloudFront<br/>Frontend Distribution]
-    CloudFront_Frontend --> S3_Frontend[(📦 S3 Bucket<br/>React SPA)]
-
-    %% API Layer
-    CloudFront_Frontend --> API_Gateway[🚪 API Gateway<br/>REST API]
-    API_Gateway --> Cognito[🔐 Amazon Cognito<br/>User Auth]
-    API_Gateway --> Lambda_API[⚡ API Lambdas<br/>Business Logic]
-
-    %% Data Storage
-    Lambda_API --> DynamoDB[(🗄️ DynamoDB<br/>Tracks, Users, Events)]
-    Lambda_API --> OpenSearch[(🔍 OpenSearch<br/>Search Index)]
-
-    %% Event Processing
-    Lambda_API --> EventBridge[📡 EventBridge<br/>Event Bus]
-    EventBridge --> SQS[📨 SQS Queues<br/>Async Processing]
-    SQS --> Step_Functions[🔄 Step Functions<br/>Workflow Orchestration]
-    Step_Functions --> Lambda_Orchestration[⚡ Orchestration Lambdas<br/>Analytics & Stats]
-
-    EventBridge --> Lambda_Events[⚡ Event Lambdas<br/>Store Events,<br/>Update Stats,<br/>Notifications]
-
-    %% Media Streaming
-    Lambda_API --> CloudFront_Media[🌐 CloudFront<br/>Media Distribution]
-    Lambda_Orchestration --> CloudFront_Media
-    CloudFront_Media --> S3_Media[(🎵 S3 Bucket<br/>Audio Tracks)]
-    CloudFront_Media --> User
-
-    %% Observability
-    Lambda_API --> CloudWatch[📊 CloudWatch<br/>Logs & Metrics]
-    Lambda_Orchestration --> CloudWatch
-    Lambda_Events --> CloudWatch
-
-    %% Security & Networking
-    DynamoDB --> KMS[🔑 KMS<br/>Encryption]
-    S3_Media --> KMS
-    Lambda_API --> IAM[👮 IAM Roles]
-    Lambda_Orchestration --> IAM
-    Lambda_Events --> IAM
-
-    subgraph "Networking"
-        VPC[🏠 VPC<br/>Private Network]
-        Subnets[📍 Subnets<br/>Public/Private]
-        SG[🛡️ Security Groups]
+    User[User] --> Frontend[CloudFront + S3<br/>React SPA]
+    Frontend --> APIGW[API Gateway]
+    APIGW --> Cognito[Cognito<br/>Authentication]
+    APIGW --> API_Lambdas[API Lambdas<br/>Business Logic]
+    
+    API_Lambdas --> DynamoDB[(DynamoDB<br/>Tracks, Users, Events)]
+    API_Lambdas --> OpenSearch[(OpenSearch<br/>Search Index)]
+    API_Lambdas --> EventBridge[EventBridge<br/>Event Bus]
+    
+    EventBridge --> SQS[SQS Queues]
+    SQS --> StepFunctions[Step Functions<br/>Orchestration]
+    StepFunctions --> Orchestration_Lambdas[Orchestration Lambdas<br/>Analytics, Stats]
+    Orchestration_Lambdas --> DynamoDB
+    
+    EventBridge --> Event_Lambdas[Event Lambdas<br/>Store Events, Update Stats,<br/>Process Uploads, Notifications]
+    Event_Lambdas --> DynamoDB
+    
+    Media[CloudFront + S3<br/>Audio Tracks] --> User
+    
+    API_Lambdas --> Media
+    Orchestration_Lambdas --> Media
+    
+    subgraph "Monitoring & Observability"
+        CloudWatch[CloudWatch<br/>Logs, Metrics, Alarms]
     end
-
-    Lambda_API --> VPC
-    Lambda_Orchestration --> VPC
-    Lambda_Events --> VPC
-
-    %% Additional Services
-    Route53[🗺️ Route 53<br/>DNS] --> CloudFront_Frontend
-    ACM[📜 ACM<br/>SSL Certificates] --> CloudFront_Frontend
-    ACM --> API_Gateway
-```
+    
+    API_Lambdas --> CloudWatch
+    Orchestration_Lambdas --> CloudWatch
+    Event_Lambdas --> CloudWatch
+    
+    subgraph "Security"
+        KMS[KMS<br/>Encryption Keys]
+        IAM[IAM<br/>Roles & Policies]
+    end
+    
+    DynamoDB --> KMS
+    Media --> KMS
+    API_Lambdas --> IAM
+    Orchestration_Lambdas --> IAM
+    Event_Lambdas --> IAM
+```</content>
 <parameter name="filePath">/Users/ec2-user/spotify-app/infra_diagram.md

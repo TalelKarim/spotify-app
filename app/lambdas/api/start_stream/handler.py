@@ -1,7 +1,9 @@
 import json
 import os
 import boto3
+import uuid
 from datetime import datetime
+from logger import StructuredLogger
 
 dynamodb = boto3.resource("dynamodb")
 eventbridge = boto3.client("events")
@@ -11,6 +13,7 @@ TRACKS_TABLE = os.environ["TRACKS_TABLE"]
 ALLOWED_ORIGIN = os.environ.get("ALLOWED_ORIGIN", "http://localhost:5173")
 
 tracks_table = dynamodb.Table(TRACKS_TABLE)
+logger = StructuredLogger(__name__)
 
 
 def build_response(status_code, body):
@@ -26,7 +29,12 @@ def build_response(status_code, body):
 
 
 def main(event, context):
+    # 0️⃣ Générer correlation ID unique pour tracer le flux
+    correlation_id = str(uuid.uuid4())
+    logger.set_correlation_id(correlation_id)
+    
     track_id = event["pathParameters"]["trackId"]
+    logger.info("Start stream request received", track=track_id)
 
     # 1️⃣ Vérifier existence du track
     response = tracks_table.get_item(
@@ -39,10 +47,12 @@ def main(event, context):
     item = response.get("Item")
 
     if not item:
+        logger.error("Track not found", track=track_id)
         return build_response(404, {"error": "Track does not exist"})
 
     # 🔥 NOUVEAU : Vérifier status READY
     if item.get("status") != "READY":
+        logger.warning("Track not ready", track=track_id, status=item.get("status"))
         return build_response(409, {"error": "Track not ready"})
 
     # 2️⃣ Récupération user + headers
@@ -53,10 +63,14 @@ def main(event, context):
     country = headers.get("x-country")
 
     if not user_id:
+        logger.error("Missing authenticated user")
         return build_response(400, {"error": "Missing authenticated user"})
 
-    # 3️⃣ Construction event métier
+    logger.set_context(user_id=user_id, track_id=track_id)
+
+    # 3️⃣ Construction event métier avec correlation ID
     listening_event = {
+        "correlationId": correlation_id,
         "eventType": "TrackPlayed",
         "trackId": track_id,
         "userId": user_id,
@@ -69,6 +83,8 @@ def main(event, context):
     }
 
     # 4️⃣ Publish EventBridge
+    logger.info("Publishing TrackPlayed event to EventBridge", event_id=listening_event.get("correlationId"))
+    
     eb_response = eventbridge.put_events(
         Entries=[
             {
@@ -81,10 +97,13 @@ def main(event, context):
     )
 
     if eb_response.get("FailedEntryCount", 0) > 0:
-        print("❌ Failed to publish event:", eb_response)
+        logger.error("Failed to publish event to EventBridge", response=str(eb_response))
         return build_response(500, {"error": "Failed to publish event"})
+
+    logger.info("Track play event published successfully")
 
     return build_response(202, {
         "message": "Track play registered",
-        "trackId": track_id
+        "trackId": track_id,
+        "correlationId": correlation_id
     })
