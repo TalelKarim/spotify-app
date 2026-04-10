@@ -1,7 +1,7 @@
 import React from 'react';
 
-interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
-  variant?: 'heading' | 'subheading' | 'body' | 'caption' | 'label';
+export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
+  variant?: 'heading' | 'subheading' | 'body' | 'caption' | 'label' | '3xl';
   weight?: 'light' | 'normal' | 'medium' | 'semibold' | 'bold';
   color?: 'primary' | 'secondary' | 'muted' | 'success' | 'warning' | 'danger';
   children: React.ReactNode;
@@ -13,6 +13,7 @@ const variantClasses = {
   body: 'text-base leading-relaxed',
   caption: 'text-sm leading-relaxed',
   label: 'text-sm font-medium',
+  '3xl': 'text-3xl leading-tight',
 };
 
 const weightClasses = {

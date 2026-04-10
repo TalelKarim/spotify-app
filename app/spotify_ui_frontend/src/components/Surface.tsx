@@ -1,6 +1,6 @@
 import React from 'react';
 
-interface SurfaceProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface SurfaceProps extends React.HTMLAttributes<HTMLDivElement> {
   elevation?: 'flat' | 'raised' | 'elevated' | 'floating';
   background?: 'dark' | 'darker' | 'gradient' | 'transparent';
   rounded?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
