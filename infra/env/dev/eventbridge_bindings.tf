@@ -6,6 +6,9 @@ resource "aws_cloudwatch_event_target" "eventbridge_to_sqs" {
   arn            = module.listening_events_queue.queue_arn
 }
 
+
+
+
 resource "aws_cloudwatch_event_target" "to_stepfn" {
   rule           = module.rule_track_played_to_stepfn.rule_name
   event_bus_name = module.eventbridge_bus.bus_name

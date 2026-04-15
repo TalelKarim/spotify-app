@@ -47,6 +47,7 @@ def main(event, context):
         }
     )
 
+
     item = response.get("Item")
 
     if not item:
