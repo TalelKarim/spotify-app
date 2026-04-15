@@ -35,4 +35,5 @@ module "orchestration_lambdas" {
   package_path  = "../../../app/lambdas/dist/${each.key}.zip"
 
   environment_variables = each.value.env
+  layers                = [aws_lambda_layer_version.shared_logger.arn]
 }

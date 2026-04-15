@@ -2,6 +2,7 @@ import os
 import json
 import base64
 from decimal import Decimal
+from logger import StructuredLogger
 
 import boto3
 from boto3.dynamodb.conditions import Attr
@@ -12,6 +13,7 @@ CLOUDFRONT_DOMAIN = os.environ.get("CLOUDFRONT_DOMAIN", "").strip()
 
 table = dynamodb.Table(TABLE_NAME)
 ALLOWED_ORIGIN = os.environ.get("ALLOWED_ORIGIN", "http://localhost:5173")
+logger = StructuredLogger(__name__)
 
 
 
@@ -85,6 +87,9 @@ def sanitize_track(item):
 
 
 def main(event, context):
+    logger.clear_context()
+    logger.set_lambda_context(context)
+
     params = event.get("queryStringParameters") or {}
 
     limit = params.get("limit")
@@ -97,6 +102,7 @@ def main(event, context):
         limit = 50
 
     cursor = decode_cursor(params.get("cursor"))
+    logger.info("Fetching public tracks", limit=limit, hasCursor=cursor is not None)
 
     items = []
     last_evaluated_key = cursor
@@ -132,4 +138,5 @@ def main(event, context):
         "nextCursor": encode_cursor(last_evaluated_key),
     }
 
+    logger.info("Fetched public tracks", itemCount=len(items), hasNextCursor=body["nextCursor"] is not None)
     return build_response(200, {"items": items})

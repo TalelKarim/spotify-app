@@ -17,6 +17,10 @@ def main(event, context):
     Stocke les events d'écoute avec le correlation ID pour tracing
     """
 
+    logger.clear_context()
+    logger.set_lambda_context(context)
+    logger.info("Processing listening event batch", recordCount=len(event.get("Records", [])))
+
     for record in event.get("Records", []):
         try:
             # 1️⃣ Body SQS = string JSON

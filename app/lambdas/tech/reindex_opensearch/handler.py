@@ -1,16 +1,16 @@
 import os
 import json
-import logging
 from decimal import Decimal
+from logger import StructuredLogger
 
 import boto3
 import requests
 from requests_aws4auth import AWS4Auth
 from boto3.dynamodb.types import TypeDeserializer
+from requests import RequestException, Timeout
 
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger = StructuredLogger(__name__)
 
 # --- Config OpenSearch depuis les variables d'env ---
 RAW_ENDPOINT = os.environ["OPENSEARCH_ENDPOINT"]  # ex: vpc-spotify-dev-search-...eu-west-1.es.amazonaws.com
@@ -54,7 +54,7 @@ def _index_document(track_id: str, doc: dict):
     Indexe ou met à jour un document dans OpenSearch.
     """
     url = f"{OPENSEARCH_ENDPOINT}/{TRACKS_INDEX}/_doc/{track_id}"
-    logger.info(f"Indexing document track_id={track_id} url={url}")
+    logger.info("Indexing OpenSearch document", trackId=track_id, url=url)
 
     try:
         r = requests.put(
@@ -65,15 +65,11 @@ def _index_document(track_id: str, doc: dict):
             timeout=10,  # ← on passe à 10s
         )
         if not r.ok:
-            logger.error(
-                f"Failed to index doc {track_id} - status={r.status_code} body={r.text}"
-            )
+            logger.error("Failed to index OpenSearch document", trackId=track_id, statusCode=r.status_code, responseBody=r.text)
     except Timeout:
-        logger.error(
-            f"Timeout while indexing doc {track_id} on {url} (increase timeout or check cluster health)"
-        )
+        logger.error("Timeout while indexing OpenSearch document", trackId=track_id, url=url)
     except RequestException as e:
-        logger.error(f"RequestException while indexing doc {track_id}: {e}")
+        logger.error("Request exception while indexing OpenSearch document", trackId=track_id, error=str(e))
 
 
 def _delete_document(track_id: str):
@@ -81,7 +77,7 @@ def _delete_document(track_id: str):
     Supprime un document de l’index OpenSearch.
     """
     url = f"{OPENSEARCH_ENDPOINT}/{TRACKS_INDEX}/_doc/{track_id}"
-    logger.info(f"Deleting document track_id={track_id} url={url}")
+    logger.info("Deleting OpenSearch document", trackId=track_id, url=url)
 
     try:
         r = requests.delete(
@@ -92,23 +88,22 @@ def _delete_document(track_id: str):
         )
         # 404 = doc pas trouvé → pas grave
         if not r.ok and r.status_code != 404:
-            logger.error(
-                f"Failed to delete doc {track_id} - status={r.status_code} body={r.text}"
-            )
+            logger.error("Failed to delete OpenSearch document", trackId=track_id, statusCode=r.status_code, responseBody=r.text)
     except Timeout:
-        logger.error(
-            f"Timeout while deleting doc {track_id} on {url} (increase timeout or check cluster health)"
-        )
+        logger.error("Timeout while deleting OpenSearch document", trackId=track_id, url=url)
     except RequestException as e:
-        logger.error(f"RequestException while deleting doc {track_id}: {e}")
+        logger.error("Request exception while deleting OpenSearch document", trackId=track_id, error=str(e))
 
 def main(event, context):
     """
     Handler déclenché par DynamoDB Streams sur la table tracks.
     Gère INSERT / MODIFY / REMOVE.
     """
+    logger.clear_context()
+    logger.set_lambda_context(context)
+
     records = event.get("Records", [])
-    logger.info(f"Received {len(records)} records from stream")
+    logger.info("Received DynamoDB stream records", recordCount=len(records))
 
     for record in records:
         try:
@@ -125,6 +120,7 @@ def main(event, context):
                     continue
 
                 track_id = pk.split("#", 1)[1]
+                logger.set_context(trackId=track_id)
 
                 # Convertir l’image DynamoDB vers un dict natif
                 deserializer = TypeDeserializer()
@@ -149,9 +145,10 @@ def main(event, context):
                     continue
 
                 track_id = pk.split("#", 1)[1]
+                logger.set_context(trackId=track_id)
                 _delete_document(track_id)
 
         except Exception as e:
-            logger.exception(f"Error processing record: {e}")
+            logger.exception("Error processing DynamoDB stream record", error=str(e))
 
     return {"statusCode": 200, "body": json.dumps({"processed": len(records)})}

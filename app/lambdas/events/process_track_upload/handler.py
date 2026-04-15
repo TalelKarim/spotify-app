@@ -4,6 +4,7 @@ import urllib.parse
 import hashlib
 from datetime import datetime
 from io import BytesIO
+from logger import StructuredLogger
 
 from mutagen.mp3 import MP3
 from mutagen import MutagenError
@@ -13,6 +14,7 @@ s3 = boto3.client("s3")
 
 TABLE_NAME = os.environ["TRACKS_TABLE"]
 table = dynamodb.Table(TABLE_NAME)
+logger = StructuredLogger(__name__)
 
 
 def read_s3_object_bytes(bucket, key):
@@ -156,7 +158,10 @@ def process_record(record):
     bucket = record["s3"]["bucket"]["name"]
     key = urllib.parse.unquote_plus(record["s3"]["object"]["key"])
 
+    logger.set_context(trackKey=key)
+
     if not key.startswith("tracks/") or not key.endswith(".mp3"):
+        logger.info("Ignoring non-track upload event")
         return {"key": key, "status": "ignored"}
 
     track_id = key.split("/")[-1].replace(".mp3", "")
@@ -168,6 +173,7 @@ def process_record(record):
     item = response.get("Item")
 
     if not item:
+        logger.warning("Track metadata not found for upload")
         return {"key": key, "status": "track_not_found"}
 
     expected_hash = item.get("audioHash")
@@ -176,6 +182,7 @@ def process_record(record):
         audio_bytes = read_s3_object_bytes(bucket, key)
         actual_hash = sha256_bytes(audio_bytes)
     except Exception:
+        logger.exception("Failed to read uploaded audio")
         # on laisse l’event échouer pour retry automatique
         raise
 
@@ -185,24 +192,32 @@ def process_record(record):
         mark_track_invalid(pk, sk, actual_hash, "AUDIO_DURATION_EXTRACT_FAILED")
         if expected_hash:
             mark_lock_invalid(expected_hash, "AUDIO_DURATION_EXTRACT_FAILED")
+        logger.warning("Audio duration extraction failed", trackId=track_id)
         return {"key": key, "status": "invalid_duration_extract_failed"}
 
     # Compatibilité anciens tracks
     if not expected_hash:
         mark_track_ready_legacy(pk, sk, actual_hash, duration_seconds)
+        logger.info("Track validated in legacy mode", trackId=track_id, duration=duration_seconds)
         return {"key": key, "status": "ready_legacy"}
 
     if actual_hash == expected_hash:
         mark_track_ready(pk, sk, actual_hash, duration_seconds)
         mark_lock_ready(expected_hash)
+        logger.info("Track validated successfully", trackId=track_id, duration=duration_seconds)
         return {"key": key, "status": "ready"}
 
     mark_track_invalid(pk, sk, actual_hash, "AUDIO_HASH_MISMATCH")
     mark_lock_invalid(expected_hash, "AUDIO_HASH_MISMATCH")
+    logger.warning("Audio hash mismatch detected", trackId=track_id)
     return {"key": key, "status": "invalid_hash_mismatch"}
 
 
 def main(event, context):
+    logger.clear_context()
+    logger.set_lambda_context(context)
+    logger.info("Processing uploaded track batch", recordCount=len(event.get("Records", [])))
+
     results = []
 
     for record in event.get("Records", []):

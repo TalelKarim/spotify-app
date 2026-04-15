@@ -11,6 +11,9 @@ logger = StructuredLogger(__name__)
 
 def main(event, context):
     try:
+        logger.clear_context()
+        logger.set_lambda_context(context)
+
         detail = event.get("detail", event)
 
         correlation_id = detail.get("correlationId")

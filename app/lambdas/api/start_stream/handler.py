@@ -29,6 +29,9 @@ def build_response(status_code, body):
 
 
 def main(event, context):
+    logger.clear_context()
+    logger.set_lambda_context(context)
+
     # 0️⃣ Générer correlation ID unique pour tracer le flux
     correlation_id = str(uuid.uuid4())
     logger.set_correlation_id(correlation_id)

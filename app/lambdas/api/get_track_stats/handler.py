@@ -2,11 +2,13 @@ import os
 import boto3
 import json
 from decimal import Decimal
+from logger import StructuredLogger
 
 dynamodb = boto3.resource("dynamodb")
 TABLE_NAME = os.environ["TRACKS_TABLE"]
 ALLOWED_ORIGIN = os.environ.get("ALLOWED_ORIGIN", "http://localhost:5173")
 table = dynamodb.Table(TABLE_NAME)
+logger = StructuredLogger(__name__)
 
 
 def decimal_to_native(obj):
@@ -31,7 +33,12 @@ def build_response(status_code, body):
 
 
 def main(event, context):
+    logger.clear_context()
+    logger.set_lambda_context(context)
+
     track_id = event["pathParameters"]["trackId"]
+    logger.set_context(trackId=track_id)
+    logger.info("Fetching track stats")
 
     pk = f"TRACK#{track_id}"
     sk = "METADATA"
@@ -46,6 +53,7 @@ def main(event, context):
     item = response.get("Item")
 
     if not item:
+        logger.warning("Track stats not found")
         return build_response(404, {"error": "Track not found"})
 
     stats = {
@@ -54,4 +62,5 @@ def main(event, context):
         "lastPlayedAt": item.get("lastPlayedAt"),
     }
 
+    logger.info("Fetched track stats", plays=stats["plays"])
     return build_response(200, stats)

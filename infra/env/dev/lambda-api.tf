@@ -128,7 +128,10 @@ module "api_lambdas" {
     }
   )
 
-  layers = contains(["api_search"], each.key) ? [aws_lambda_layer_version.python_requests.arn] : []
+  layers = concat(
+    [aws_lambda_layer_version.shared_logger.arn],
+    contains(["api_search"], each.key) ? [aws_lambda_layer_version.python_requests.arn] : []
+  )
 }
 
 

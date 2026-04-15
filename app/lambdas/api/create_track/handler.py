@@ -6,6 +6,7 @@ import boto3
 from botocore.config import Config
 from datetime import datetime
 import time
+from logger import StructuredLogger
 
 REGION = os.environ.get("AWS_REGION", "eu-west-1")
 ALLOWED_ORIGIN = os.environ.get("ALLOWED_ORIGIN", "http://localhost:5173")
@@ -27,6 +28,7 @@ TABLE_NAME = os.environ["TRACKS_TABLE"]
 BUCKET_NAME = os.environ["TRACKS_BUCKET"]
 
 SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
+logger = StructuredLogger(__name__)
 
 
 def build_response(status_code, body):
@@ -86,13 +88,18 @@ def require_admin(event):
 # -------- MAIN HANDLER --------
 
 def main(event, context):
+    logger.clear_context()
+    logger.set_lambda_context(context)
+
     deny = require_admin(event)
     if deny:
+        logger.warning("Non-admin attempted track creation")
         return deny
 
     try:
         body = json.loads(event["body"])
     except Exception:
+        logger.warning("Invalid create track payload")
         return build_response(400, {"error": "Invalid JSON"})
 
     title = body.get("title")
@@ -100,17 +107,21 @@ def main(event, context):
     audio_hash = (body.get("audioHash") or "").strip().lower()
 
     if not title or not artist:
+        logger.warning("Missing required track metadata")
         return build_response(400, {"error": "Missing required fields"})
 
     if not audio_hash:
+        logger.warning("Missing audio hash")
         return build_response(400, {"error": "Missing audioHash"})
 
     if not SHA256_RE.match(audio_hash):
+        logger.warning("Invalid audio hash format")
         return build_response(400, {"error": "Invalid audioHash format"})
 
     cover_content_type = body.get("coverContentType", "image/jpeg")
 
     if not cover_content_type.startswith("image/"):
+        logger.warning("Invalid cover content type", coverContentType=cover_content_type)
         return build_response(400, {"error": "Invalid cover type"})
 
     extension_map = {
@@ -122,9 +133,12 @@ def main(event, context):
     cover_ext = extension_map.get(cover_content_type)
 
     if not cover_ext:
+        logger.warning("Unsupported cover content type", coverContentType=cover_content_type)
         return build_response(400, {"error": "Unsupported cover format"})
 
     track_id = str(uuid.uuid4())
+    logger.set_context(trackId=track_id)
+    logger.info("Creating upload reservation for track")
 
     audio_key = f"tracks/{track_id}.mp3"
     cover_key = f"covers/{track_id}.{cover_ext}"
@@ -235,6 +249,8 @@ def main(event, context):
         },
         ExpiresIn=300
     )
+
+    logger.info("Created upload reservation", audioKey=audio_key, coverKey=cover_key)
 
     return build_response(201, {
         "trackId": track_id,

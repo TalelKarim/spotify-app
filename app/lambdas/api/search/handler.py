@@ -1,13 +1,12 @@
 import os
 import json
-import logging
+from logger import StructuredLogger
 
 import boto3
 import requests
 from requests_aws4auth import AWS4Auth
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger = StructuredLogger(__name__)
 
 region = os.environ.get("AWS_REGION", "eu-west-1")
 service = "es"
@@ -43,11 +42,17 @@ def build_response(status_code, body):
 
 
 def main(event, context):
+    logger.clear_context()
+    logger.set_lambda_context(context)
+
     params = event.get("queryStringParameters") or {}
 
     q = (params.get("q") or "").strip()
     if not q:
+        logger.warning("Missing search query")
         return build_response(400, {"error": "Missing query parameter 'q'"})
+
+    logger.info("Executing track search", query=q)
 
     # pagination
     try:
@@ -115,11 +120,11 @@ def main(event, context):
     try:
         r = requests.post(url, auth=awsauth, json=body, headers={"Content-Type": "application/json"}, timeout=10)
     except Exception as e:
-        logger.exception("Error calling OpenSearch: %s", e)
+        logger.exception("Error calling OpenSearch", error=str(e))
         return build_response(502, {"error": "Search backend unavailable"})
 
     if r.status_code >= 300:
-        logger.error("OpenSearch error %s: %s", r.status_code, r.text)
+        logger.error("OpenSearch returned an error", statusCode=r.status_code, responseBody=r.text[:500])
         return build_response(502, {"error": "Search query failed", "details": r.text[:500]})
 
     data = r.json()
@@ -145,6 +150,8 @@ def main(event, context):
                 "artist": hl.get("artist")
             }
         })
+
+    logger.info("Track search completed", resultCount=len(results), total=total, sort=sort_mode)
 
     return build_response(200, {
         "q": q,

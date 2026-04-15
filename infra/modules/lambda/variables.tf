@@ -90,7 +90,7 @@ variable "tracing_mode" {
 
 variable "log_format" {
   type    = string
-  default = "JSON"
+  default = "Text"
 }
 
 variable "application_log_level" {

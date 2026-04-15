@@ -1,6 +1,7 @@
 import os
 import json
 from decimal import Decimal
+from logger import StructuredLogger
 
 import boto3
 
@@ -13,6 +14,7 @@ CLOUDFRONT_DOMAIN = os.environ.get("CLOUDFRONT_DOMAIN", "").strip()
 ALLOWED_ORIGIN = os.environ.get("ALLOWED_ORIGIN", "http://localhost:5173")
 
 listening_table = dynamodb.Table(LISTENING_EVENTS_TABLE)
+logger = StructuredLogger(__name__)
 
 
 def build_response(status_code, body):
@@ -115,9 +117,15 @@ def batch_get_tracks(track_ids):
 
 
 def main(event, context):
+    logger.clear_context()
+    logger.set_lambda_context(context)
+
     user_id = extract_user_id(event)
     if not user_id:
+        logger.warning("Unauthorized history request")
         return build_response(401, {"error": "Unauthorized"})
+
+    logger.set_context(userId=user_id)
 
     params = event.get("queryStringParameters") or {}
 
@@ -128,6 +136,7 @@ def main(event, context):
         limit = 50
 
     limit = max(1, min(limit, 100))
+    logger.info("Fetching listening history", limit=limit)
 
     pk = f"USER#{user_id}"
 
@@ -174,4 +183,5 @@ def main(event, context):
         "items": clean_items,
     }
 
+    logger.info("Fetched listening history", itemCount=len(clean_items))
     return build_response(200, body)

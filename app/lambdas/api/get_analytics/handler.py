@@ -3,12 +3,14 @@ import boto3
 import json
 from datetime import datetime
 from decimal import Decimal
+from logger import StructuredLogger
 
 dynamodb = boto3.resource("dynamodb")
 TABLE_NAME = os.environ["ANALYTICS_TABLE"]
 table = dynamodb.Table(TABLE_NAME)
 
 ALLOWED_ORIGIN = os.environ.get("ALLOWED_ORIGIN", "http://localhost:5173")
+logger = StructuredLogger(__name__)
 
 
 def decimal_to_native(obj):
@@ -36,7 +38,11 @@ def build_response(status_code, body):
 
 
 def main(event, context):
+    logger.clear_context()
+    logger.set_lambda_context(context)
+
     today = datetime.utcnow().strftime("%Y-%m-%d")
+    logger.info("Fetching global analytics", date=today)
 
     pk = "ANALYTICS#GLOBAL"
     sk = f"DATE#{today}"
@@ -51,12 +57,15 @@ def main(event, context):
     item = response.get("Item")
 
     if not item:
+        logger.info("No analytics record for date", date=today)
         return build_response(200, {
             "date": today,
             "dailyPlays": 0
         })
 
     item = decimal_to_native(item)
+
+    logger.info("Fetched global analytics", date=today, dailyPlays=item.get("dailyPlays", 0))
 
     return build_response(200, {
         "date": today,

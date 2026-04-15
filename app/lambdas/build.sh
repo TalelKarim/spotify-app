@@ -3,11 +3,32 @@ set -e
 
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DIST_DIR="$ROOT_DIR/dist"
+LAYERS_DIR="$ROOT_DIR/layers"
 
 mkdir -p "$DIST_DIR"
 
 log() {
   echo "▶ $1"
+}
+
+package_shared_logger_layer() {
+  local layer_src="$LAYERS_DIR/shared"
+  local zip_path="$LAYERS_DIR/shared-python.zip"
+
+  if [ ! -d "$layer_src" ]; then
+    echo "❌ Shared layer path not found: $layer_src"
+    exit 1
+  fi
+
+  log "Packaging shared logger layer"
+  rm -f "$zip_path"
+
+  (
+    cd "$layer_src"
+    zip -qr "$zip_path" .
+  )
+
+  log "Created $zip_path"
 }
 
 zip_lambda() {
@@ -72,6 +93,8 @@ tech_show_index_opensearch:tech/show_index_opensearch
 if [ $# -eq 1 ]; then
   TARGET="$1"
 
+  package_shared_logger_layer
+
   while IFS=: read -r name path; do
     [ -z "$name" ] && continue
 
@@ -92,6 +115,8 @@ fi
 # All lambdas
 # ---------------------------------
 log "Packaging ALL lambdas"
+
+package_shared_logger_layer
 
 while IFS=: read -r name path; do
   [ -z "$name" ] && continue
