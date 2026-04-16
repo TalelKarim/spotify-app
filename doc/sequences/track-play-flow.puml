@@ -10,7 +10,6 @@ database "DynamoDB Tracks" as TRACKS
 queue "EventBridge Bus" as EB
 queue "SQS Listening Events" as SQS
 participant "event_store_listening_event" as STORE
-participant "event_update_track_stats" as EVTSTATS
 participant "Step Functions\nListening Analytics" as SFN
 participant "orch_update_track_stats" as ORCHTRACK
 participant "orch_update_user_stats" as ORCHUSER
@@ -37,9 +36,6 @@ par Event fan-out to SQS
   STORE -> EVENTS : Persist raw listening event
   STORE --> SQS : Ack
 
-  SQS -> EVTSTATS : Deliver event batch
-  EVTSTATS -> TRACKS : Increment plays, set lastPlayedAt
-  EVTSTATS --> SQS : Ack
 else Event fan-out to Step Functions
   EB -> SFN : Start execution
   SFN -> ORCHTRACK : UpdateTrackStats

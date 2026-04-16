@@ -15,7 +15,7 @@ APIGW -> COG : Validate JWT
 COG --> APIGW : Claims with user id
 APIGW -> HISTORY : Proxy request
 HISTORY -> EVENTS : Query GSI1 by user id
-EVENTS --> HISTORY : Listening events
+EVENTS --> HISTORY : Listening event
 HISTORY -> TRACKS : BatchGet track metadata
 TRACKS --> HISTORY : Titles, artists, covers, statuses
 HISTORY -> HISTORY : Enrich and sanitize response
