@@ -26,6 +26,15 @@ Ce dossier centralise les diagrammes d'architecture et les diagrammes de séquen
 - `global-architecture.drawio` : ouvrir avec diagrams.net ou l'extension Draw.io pour VS Code
 - fichiers `.puml` : ouvrir avec une extension PlantUML ou générer en PNG/SVG via votre toolchain PlantUML
 
+## Ouvrir les fichiers .puml
+
+- installer l'extension VS Code `jebbs.plantuml`
+- ouvrir un fichier dans [doc/sequences](doc/sequences)
+- lancer `PlantUML: Preview Current Diagram`
+- pour exporter, lancer `PlantUML: Export Current Diagram`
+
+Sans extension, je peux aussi te générer directement les fichiers SVG ou PNG à côté des `.puml`.
+
 ## Convention
 
 Les diagrammes documentent l'état actuel du dépôt et distinguent les composants réellement implémentés des placeholders encore présents dans le code.
