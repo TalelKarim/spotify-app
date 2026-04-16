@@ -1,0 +1,40 @@
+@startuml
+title Track Upload, Validation and Indexing Flow
+
+actor Admin
+participant "React SPA" as SPA
+participant "API Gateway" as APIGW
+participant "Cognito Authorizer" as COG
+participant "api_create_track" as CREATE
+database "DynamoDB Tracks" as TRACKS
+collections "S3 Media Bucket" as S3
+participant "event_process_track_upload" as PROCESS
+queue "DynamoDB Stream" as STREAM
+participant "tech_reindex_opensearch" as REINDEX
+database "OpenSearch" as OS
+
+Admin -> SPA : Submit track metadata + audio hash
+SPA -> APIGW : POST /tracks
+APIGW -> COG : Validate JWT and groups
+COG --> APIGW : Admin claims
+APIGW -> CREATE : Proxy request
+CREATE -> TRACKS : Reserve metadata and audio hash lock
+CREATE --> APIGW : Presigned upload URLs
+APIGW --> SPA : 201 Created
+
+SPA -> S3 : PUT audio file
+SPA -> S3 : PUT cover file
+S3 -> PROCESS : S3 event notification
+PROCESS -> S3 : Read uploaded MP3 bytes
+PROCESS -> PROCESS : Compute actual hash and duration
+
+alt Validation successful
+  PROCESS -> TRACKS : Set status READY and validated metadata
+  TRACKS -> STREAM : Emit MODIFY event
+  STREAM -> REINDEX : Deliver stream record
+  REINDEX -> OS : Upsert track document
+else Validation failed
+  PROCESS -> TRACKS : Set status INVALID and validation error
+end
+
+@enduml

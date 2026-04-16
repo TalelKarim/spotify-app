@@ -1,0 +1,25 @@
+@startuml
+title Listening History Flow
+
+actor User
+participant "React SPA" as SPA
+participant "API Gateway" as APIGW
+participant "Cognito Authorizer" as COG
+participant "api_get_myhistory" as HISTORY
+database "DynamoDB Listening Events" as EVENTS
+database "DynamoDB Tracks" as TRACKS
+
+User -> SPA : Open listening history
+SPA -> APIGW : GET /me/listening/history
+APIGW -> COG : Validate JWT
+COG --> APIGW : Claims with user id
+APIGW -> HISTORY : Proxy request
+HISTORY -> EVENTS : Query GSI1 by user id
+EVENTS --> HISTORY : Listening events
+HISTORY -> TRACKS : BatchGet track metadata
+TRACKS --> HISTORY : Titles, artists, covers, statuses
+HISTORY -> HISTORY : Enrich and sanitize response
+HISTORY --> APIGW : History payload
+APIGW --> SPA : 200 OK
+
+@enduml

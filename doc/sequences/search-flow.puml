@@ -1,0 +1,19 @@
+@startuml
+title Search Flow
+
+actor User
+participant "React SPA" as SPA
+participant "API Gateway" as APIGW
+participant "api_search" as SEARCH
+database "OpenSearch" as OS
+
+User -> SPA : Enter search query
+SPA -> APIGW : GET /search?q=...
+APIGW -> SEARCH : Proxy request
+SEARCH -> SEARCH : Build query and pagination options
+SEARCH -> OS : POST index/_search
+OS --> SEARCH : Matching documents
+SEARCH --> APIGW : Search response DTO
+APIGW --> SPA : 200 OK
+
+@enduml

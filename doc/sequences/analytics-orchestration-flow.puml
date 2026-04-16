@@ -1,0 +1,25 @@
+@startuml
+title Analytics Orchestration Flow
+
+participant "EventBridge Bus" as EB
+participant "Step Functions\nListening Analytics" as SFN
+participant "orch_update_track_stats" as TRACK
+participant "orch_update_user_stats" as USER
+participant "orch_compute_analytics" as ANALYTICSFN
+database "DynamoDB Tracks" as TRACKS
+database "DynamoDB Users" as USERS
+database "DynamoDB Analytics" as ANALYTICS
+
+EB -> SFN : Start execution for TrackPlayed
+SFN -> TRACK : UpdateTrackStats
+TRACK -> TRACKS : ADD plays, SET lastPlayedAt
+TRACK --> SFN : trackStatsResult
+SFN -> USER : UpdateUserStats
+USER -> USERS : ADD totalPlays, SET lastPlayedTrack
+USER --> SFN : userStatsResult
+SFN -> ANALYTICSFN : ComputeAnalytics
+ANALYTICSFN -> ANALYTICS : ADD dailyPlays for DATE#yyyy-mm-dd
+ANALYTICSFN --> SFN : analyticsResult
+SFN --> EB : Execution completed
+
+@enduml
