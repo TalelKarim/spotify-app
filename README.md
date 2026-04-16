@@ -1,324 +1,302 @@
-1. Présentation du projet
+# Spotify App
 
-Ce projet implémente une plateforme de streaming audio de type Spotify, conçue autour d’une architecture serverless, event-driven et scalable sur AWS.
+Plateforme de streaming audio serverless construite sur AWS, conçue pour séparer strictement les parcours temps réel orientés utilisateur des traitements asynchrones de données, d'indexation et d'analytics.
 
-L’objectif n’est pas de construire un simple CRUD, mais un système distribué moderne, capable de :
+Le projet combine un frontend React/Vite, une couche d'API exposée via API Gateway, des traitements métier implémentés en AWS Lambda, un socle d'événements autour d'EventBridge et SQS, une orchestration Step Functions et une infrastructure déclarative en Terraform.
 
-servir des millions d’écoutes
+## Résumé Exécutif
 
-absorber des pics de charge
+L'objectif du projet est de fournir une architecture de type plateforme de streaming moderne avec les propriétés suivantes :
 
-séparer strictement le temps réel utilisateur des traitements lourds
+- diffusion directe des médias via CloudFront et S3, sans faire transiter l'audio par l'API applicative
+- découplage des traitements métier via des événements pour absorber la charge et éviter les dépendances synchrones inutiles
+- séparation claire entre lecture du catalogue, ingestion média, capture des écoutes et calcul des statistiques
+- déploiement et gouvernance de l'infrastructure via Terraform
 
-évoluer sans refonte majeure
+Le système est organisé autour de quatre plans complémentaires :
 
-2. Principes d’architecture
-Séparation fondamentale
+- plan de présentation : SPA React distribuée via S3 et CloudFront
+- plan de contrôle : API Gateway et Lambdas API pour les opérations synchrones
+- plan événementiel : EventBridge, SQS et Lambdas événements
+- plan analytique et d'orchestration : Step Functions, Lambdas d'orchestration, DynamoDB Streams et OpenSearch
 
-Control plane : API Gateway, Lambdas API
+## Capacités Métier
 
-Data plane : CloudFront + S3 (streaming audio)
+Le périmètre actuellement représenté dans le dépôt couvre principalement les capacités suivantes :
 
-Event plane : EventBridge + SQS
+- authentification et autorisation via Amazon Cognito
+- consultation du catalogue audio
+- récupération du profil utilisateur et de l'historique d'écoute
+- création d'un titre côté administration avec réservation d'upload sur S3
+- validation d'un upload MP3 et passage du titre à l'état `READY`
+- émission d'un événement métier `TrackPlayed` lors d'une lecture
+- stockage des événements d'écoute et mise à jour des statistiques piste, utilisateur et globales
+- indexation et recherche de titres via OpenSearch
 
-Orchestration : Step Functions
+Certaines capacités existent dans le dépôt sous forme de stubs ou de placeholders et ne doivent pas être présentées comme finalisées tant qu'elles n'ont pas été implémentées de bout en bout.
 
-👉 Aucun flux audio ne transite par API Gateway ni Lambda.
+## Principes d'Architecture
 
-3. Acteurs du système
+### 1. Séparation stricte des flux
 
-Utilisateur final
+Le média audio n'est pas servi par l'API métier. L'API délivre des métadonnées, des URLs et des événements ; le contenu audio est distribué par CloudFront depuis S3. Cette séparation réduit les coûts, améliore la latence et évite de coupler la scalabilité du streaming à celle des traitements applicatifs.
 
-écoute de musique
+### 2. Event-driven par défaut
 
-recherche
+Les événements métiers sont publiés sur EventBridge afin de déclencher plusieurs traitements indépendants : audit, agrégations, enrichissements et indexation. Cette approche réduit le couplage temporel entre producteurs et consommateurs.
 
-interactions (play)
+### 3. Serverless natif
 
-Backend applicatif
+Le projet privilégie les services managés AWS : API Gateway, Lambda, DynamoDB, EventBridge, SQS, Step Functions, CloudFront, S3 et OpenSearch. L'architecture vise la résilience opérationnelle, le scaling horizontal automatique et la réduction du coût d'exploitation.
 
-gestion des métadonnées
+### 4. Infrastructure as Code
 
-génération d’événements métier
+L'infrastructure est déclarée sous `infra/` avec un découpage modulaire Terraform. Les environnements sont organisés sous `infra/env/` et les briques réutilisables sous `infra/modules/`.
 
-Backend asynchrone
+## Vue d'Architecture
 
-statistiques
+### Chaîne de valeur technique
 
-analytics
+1. Le frontend React interagit avec API Gateway pour les parcours synchrones.
+2. Les Lambdas API lisent ou écrivent les métadonnées dans DynamoDB.
+3. Les événements métier sont publiés sur EventBridge.
+4. Les traitements asynchrones consomment les événements via SQS ou Step Functions.
+5. Les médias sont stockés sur S3 et servis par CloudFront.
+6. Les titres prêts à être recherchés sont indexés dans OpenSearch.
 
-traitements différés
+### Composants principaux
 
-Opérations techniques
+- frontend web : [app/spotify_ui_frontend](app/spotify_ui_frontend)
+- lambdas applicatives : [app/lambdas](app/lambdas)
+- infrastructure Terraform : [infra](infra)
+- documentation projet : [doc](doc)
 
-ingestion
+## Architecture Applicative
 
-re-indexation
+### Frontend
 
+Le frontend est une SPA React 18 construite avec Vite et Tailwind CSS. Il gère :
 
+- l'authentification Cognito Hosted UI avec PKCE
+- les parcours catalogue et recherche
+- la lecture de titres côté client
+- l'upload d'un titre côté administration
 
+Le code est situé dans [app/spotify_ui_frontend](app/spotify_ui_frontend).
 
-1) Use cases complets du projet Spotify
+### Couche API
 
+Les endpoints REST sont exposés par API Gateway et routent vers des Lambdas Python. Les principales routes actuellement déclarées dans l'environnement `dev` sont :
 
-A. Auth & identité
+- `GET /health`
+- `GET /search`
+- `GET /analytics/global`
+- `GET /tracks`
+- `GET /tracks/{trackId}`
+- `GET /tracks/{trackId}/stats`
+- `POST /tracks`
+- `POST /tracks/{trackId}/play`
+- `GET /me`
+- `GET /me/recently-played`
+- `GET /me/listening/history`
 
-    UC-A1 : Login / Logout (Cognito Hosted UI + PKCE)
+La définition API Gateway se trouve dans [infra/env/dev/apigw.tf](infra/env/dev/apigw.tf).
 
-    UC-A2 : Récupérer mon profil (GET /me)
+### Couche Événements
 
-    UC-A3 : RBAC simple : USER vs ADMIN
+Le plan événementiel traite les événements métier et techniques selon plusieurs patterns :
 
+- EventBridge pour le bus métier
+- SQS pour l'absorption et le découplage des consommateurs
+- Lambda pour les traitements ciblés
+- Step Functions pour les agrégations multi-étapes
 
+### Couche Data
 
-B. Catalogue tracks (métadonnées + media)
+Le projet s'appuie principalement sur :
 
-    UC-B1 (ADMIN) : Créer un track (métadonnées) + obtenir presigned upload URL
+- DynamoDB pour les métadonnées métier, les événements d'écoute et les agrégats
+- S3 pour les médias audio et assets associés
+- OpenSearch pour la recherche texte et l'indexation du catalogue
 
-    UC-B2 (ADMIN) : Upload MP3 sur S3 via presigned URL
+## Lambdas par Domaine
 
-    UC-B3 (Système) : S3 Event → valider upload → passer track à READY
+### Lambdas API
 
-    UC-B4 (USER) : Lister tracks
+Les Lambdas API gèrent les interactions synchrones avec le frontend :
 
-    UC-B5 (USER) : Get track details (inclut audioUrl CloudFront)
+- `api_create_track` : réserve un titre, contrôle l'unicité du hash audio et génère les URLs d'upload S3
+- `api_get_tracks` : liste les titres publiables du catalogue
+- `api_get_track` : retourne le détail d'un titre prêt à être lu
+- `api_get_track_stats` : expose les statistiques d'une piste
+- `api_get_me` : retourne l'identité issue du token Cognito
+- `api_get_me_recently_played` : retourne les pistes récemment jouées
+- `api_get_myhistory` : retourne l'historique d'écoute enrichi
+- `api_get_user` : retourne l'agrégat utilisateur
+- `api_get_analytics` : retourne les statistiques globales du jour
+- `api_start_stream` : publie l'événement métier `TrackPlayed`
+- `api_search` : interroge OpenSearch
+- `api_healthcheck` : point de santé technique
 
-    UC-B6 (USER) : Jouer un track (POST /tracks/{id}/play)
+### Lambdas événements
 
+- `event_store_listening_event` : persiste les événements d'écoute bruts
+- `event_update_track_stats` : met à jour les agrégats piste côté événementiel
+- `event_process_track_upload` : valide l'upload MP3, calcule le hash réel et passe un titre à `READY`
+- `event_publish_notifications` : présent dans le dépôt mais encore placeholder
 
-C. Listening events (événement métier)
+### Lambdas d'orchestration
 
-    UC-C1 : Enregistrer un “TrackPlayed event” (source API)
+La state machine définie dans [infra/env/dev/step_functions.tf](infra/env/dev/step_functions.tf) orchestre trois traitements :
 
-    UC-C2 : Stocker l’événement brut dans listening-events (audit trail)
+- `orch_update_track_stats`
+- `orch_update_user_stats`
+- `orch_compute_analytics`
 
-    UC-C3 : Orchestrer des traitements dérivés (stats track, stats user, analytics global)
+Cette chaîne produit les agrégats piste, utilisateur et globaux à partir d'un même flux métier.
 
+### Lambdas techniques
 
-D. Analytics & stats
+- `tech_reindex_opensearch` : consomme le stream DynamoDB de la table tracks et synchronise OpenSearch
+- `tech_show_index_opensearch` : utilitaire d'inspection d'index
+- `tech_ingest_audio_metadata` : présent dans le dépôt mais encore placeholder
 
-    UC-D1 : Get analytics global (GET /analytics/global) — ex “daily plays”
+## Flux Métier de Référence
 
-    UC-D2 : Get stats user (GET /users/{userId} ou idéalement /users/me/stats)
+### Lecture d'un titre
 
-    UC-D3 : Get stats track (GET /tracks/{id} renvoie déjà plays / lastPlayedAt)
+1. Le frontend appelle `POST /tracks/{trackId}/play`.
+2. `api_start_stream` vérifie que la piste existe et que son statut est `READY`.
+3. La Lambda publie l'événement `TrackPlayed` sur EventBridge avec un `correlationId`.
+4. Les consommateurs asynchrones stockent l'événement brut et mettent à jour les agrégats.
+5. Step Functions exécute la chaîne d'analytics et de statistiques utilisateur.
 
-    UC-D4 : (option) Analytics par jour / range (GET /analytics/daily?from=&to=)
+### Création et validation d'un titre
 
-E. Search / Indexation (tech)
+1. Un administrateur appelle `POST /tracks`.
+2. `api_create_track` crée les métadonnées initiales et réserve l'upload.
+3. Le client envoie le MP3 et la cover directement sur S3 via URLs pré-signées.
+4. L'événement S3 déclenche `event_process_track_upload`.
+5. La Lambda valide le contenu, calcule le hash, extrait la durée et passe le titre à `READY`.
+6. Le stream DynamoDB déclenche `tech_reindex_opensearch` pour rendre le titre recherchable.
 
-    UC-E1 : Indexer un track à la création/READY dans OpenSearch
+## Modèle de Données
 
-    UC-E2 : Indexer/mettre à jour stats (plays) côté index (optionnel)
+### DynamoDB
 
-    UC-E3 : Rechercher (GET /search?q=...) via OpenSearch
+Le projet repose sur un modèle orienté clés de partition et de tri. Les handlers montrent notamment les patterns suivants :
 
-2) Contrats API finaux (côté API Gateway)
-Auth (protégées par Cognito)
+- `TRACK#{trackId}` / `METADATA` pour les métadonnées d'un titre
+- `USER#{userId}` / `METADATA` pour les agrégats utilisateur
+- `ANALYTICS#GLOBAL` / `DATE#{yyyy-mm-dd}` pour les statistiques journalières
+- `TRACK#{trackId}` / `TS#{timestamp}` pour les événements d'écoute stockés
+- `AUDIOHASH#{sha256}` / `LOCK` pour la réservation et l'unicité métier d'un fichier audio
 
-GET /me ✅ (USER/ADMIN).      x 
+### OpenSearch
 
-POST /tracks/{trackId}/play ✅ (USER/ADMIN).        x 
+OpenSearch est utilisé comme index de recherche du catalogue, pas comme source de vérité transactionnelle. La persistance métier reste portée par DynamoDB.
 
-POST /events/listening ✅ (USER/ADMIN) (si on garde cette route)
+## Sécurité
 
+Les mécanismes de sécurité visibles dans le dépôt comprennent :
 
+- Cognito pour l'authentification utilisateur
+- authorizer Cognito sur les routes protégées d'API Gateway
+- IAM roles dédiés par type de Lambda
+- KMS pour le chiffrement des données gérées par l'infrastructure
+- VPC privé pour les Lambdas nécessitant l'accès à OpenSearch
 
-Admin-only
+Le module Cognito est initialisé dans [infra/env/dev/cognito.tf](infra/env/dev/cognito.tf).
 
-POST /tracks ✅ ADMIN.        x 
+## Observabilité
 
-PUT /tracks/{id} ✅ ADMIN.    
+Le projet standardise désormais le logging structuré des Lambdas Python via une layer partagée :
 
-DELETE /tracks/{id} ✅ ADMIN
+- implémentation du logger partagé : [app/lambdas/layers/shared/python/logger.py](app/lambdas/layers/shared/python/logger.py)
+- packaging applicatif et layers : [app/lambdas/build.sh](app/lambdas/build.sh)
+- configuration des logs Lambda : [infra/modules/lambda/main.tf](infra/modules/lambda/main.tf)
 
+Les logs contiennent un schéma commun centré sur `timestamp`, `level`, `message`, `functionName`, `awsRequestId` et, lorsque disponible, `correlationId`, `userId` et `trackId`.
 
-Public/Anonymous (à décider)
+## Structure du Dépôt
 
-GET /tracks  x
-
-GET /tracks/{id} x 
-
-GET /tracks/{id}/stats x 
-
-
-
-GET /search
-
-GET /analytics/global 
-
-
-
-
-Event contract (le contrat le plus important)
-EventBridge “TrackPlayed”
-
-DetailType: TrackPlayed
-Source: spotify.api
-Detail:
-
-  {
-    "eventType": "TrackPlayed",
-    "trackId": "track-123",
-    "userId": "cognito-sub-or-userid",
-    "timestamp": "2026-02-27T19:00:00Z",
-    "source": "api",
-    "metadata": {
-      "device": "mobile",
-      "country": "FR"
-    }
-  }
-
-
-
-
-Lambdas
-
-
-API Lambdas
-
-- api_create_track (ADMIN)
-
-    écrit DynamoDB track METADATA (status=UPLOADING, objectKey, TTL upload)
-
-    génère presigned PUT URL S3 (KMS compatible)
-
-- api_get_tracks
-
-    scan/pagination
-
-    renvoie audioUrl basé sur CloudFront + objectKey (si READY)
-
-- api_get_track
-
-    get_item
-
-    bloque si status != READY (409)
-
-    renvoie audioUrl
-
-- api_start_stream (protégée)
-
-    lit sub depuis JWT (authorizer claims)
-
-    publie event EventBridge TrackPlayed
-
-    renvoie 202
-
-
-- api_get_me
-
-    renvoie identity depuis claims
-
-- api_search
-
-  query OpenSearch
-
-
-
-
-Orchestration Lambdas (utilisées par Step Functions)
-
-- orch_update_track_stats
-
-  increment plays + lastPlayedAt (ConditionExpression track exists)
-
-- Orch_update_user_stats
-
- update “user aggregate” (totalPlays, lastPlayedTrack, etc.)
-
-- orch_compute_analytics
-
-  update “global daily analytics” (par date)
-
-
-
-Tech / Indexing Lambdas
-
-- process_track_upload (trigger S3)
-
-    passe status=READY
-
-    publie un event “TrackReady” pour indexation
-
-- index_track (trigger TrackReady / EventBridge / SQS)
-
-    upsert doc OpenSearch (title, artist, duration, trackId, maybe plays)
-
-    Important : plays qui bougent souvent = pas obligé de les réindexer à chaque play (coût). On peut garder OpenSearch pour search “catalogue”, et Dynamo pour stats.
-
-
-
-
-    # Spotify Serverless App - Documentation Copilot
-
-## Vue d'ensemble du projet
-
-Ce projet implémente une **plateforme de streaming audio de type Spotify** conçue autour d'une architecture serverless, event-driven et scalable sur AWS. L'objectif est de créer un système distribué moderne capable de servir des millions d'écoutes, d'absorber des pics de charge et de séparer strictement le temps réel utilisateur des traitements lourds.
-
-### Principes architecturaux fondamentaux
-
-1. **Séparation stricte des plans** :
-   - **Plan de contrôle** : API Gateway + Lambdas API pour la logique métier
-   - **Plan de données** : CloudFront + S3 pour le streaming audio direct
-   - **Plan événementiel** : EventBridge + SQS pour les traitements asynchrones
-
-2. **Architecture serverless** : Pas de serveurs à gérer, scaling automatique
-
-3. **Event-driven** : Tous les événements métier sont publiés et traités de manière asynchrone
-
-4. **Sécurité first** : Chiffrement KMS, authentification Cognito, IAM least privilege
-
-## Architecture C4
-
-### 1. Contexte système (System Context)
-
-```mermaid
-graph TB
-    User[👤 Utilisateur final<br/>Écoute musique, recherche, interactions] --> System[🎵 Système Spotify<br/>Plateforme de streaming serverless]
-
-    System --> Cognito[🔐 Amazon Cognito<br/>Authentification]
-    System --> AWS[☁️ Infrastructure AWS<br/>Services managés]
-
-    Cognito -.-> User
-    AWS -.-> System
+```text
+.
+├── README.md
+├── doc/
+├── app/
+│   ├── lambdas/
+│   └── spotify_ui_frontend/
+└── infra/
+    ├── env/
+    │   ├── dev/
+    │   └── prod/
+    └── modules/
 ```
 
-**Explication** : Le système interagit avec l'utilisateur final pour le streaming audio et utilise Cognito pour l'authentification. Toute l'infrastructure repose sur les services AWS managés.
+## Développement Local
 
-### 2. Conteneurs (Containers)
+### Frontend
 
-```mermaid
-graph TB
-    User[👤 Utilisateur] --> Frontend[🌐 Application Web<br/>React SPA<br/>S3 + CloudFront]
+Prérequis :
 
-    Frontend --> API[🚪 API Gateway<br/>Exposition REST]
+- Node.js 20+
+- npm 10+
 
-    API --> Auth[🔐 Cognito<br/>Validation JWT]
+Commandes :
 
-    API --> API_Lambdas[⚡ Lambdas API<br/>Logique métier temps réel]
-
-    API_Lambdas --> Data[(🗄️ DynamoDB<br/>Données primaires)]
-
-    API_Lambdas --> Search[(🔍 OpenSearch<br/>Index de recherche)]
-
-    API_Lambdas --> Events[📡 EventBridge<br/>Bus d'événements]
-
-    Events --> Queues[📨 SQS<br/>Files d'attente]
-
-    Queues --> Orchestrator[🔄 Step Functions<br/>Orchestration]
-
-    Orchestrator --> Orchestration_Lambdas[⚡ Lambdas Orchestration<br/>Traitements lourds]
-
-    Events --> Event_Lambdas[⚡ Lambdas Événements<br/>Traitement asynchrone]
-
-    API_Lambdas --> Media[🎵 CloudFront + S3<br/>Streaming audio]
-
-    Media --> User
+```bash
+cd app/spotify_ui_frontend
+cp .env.example .env
+npm install
+npm run dev
 ```
 
-**Explication** :
-- **Frontend** : Interface utilisateur en React, hébergée statiquement
+Build local :
+
+```bash
+cd app/spotify_ui_frontend
+npm run build
+npm run preview
+```
+
+### Lambdas
+
+Le packaging des Lambdas Python et de la layer de logging se fait via :
+
+```bash
+cd app/lambdas
+./build.sh
+```
+
+Le script produit les artefacts ZIP des fonctions sous `app/lambdas/dist/` et la layer de logging partagée sous `app/lambdas/layers/shared-python.zip`.
+
+## Déploiement Infrastructure
+
+Le socle d'infrastructure `dev` se déploie avec Terraform :
+
+```bash
+cd infra/env/dev
+terraform init
+terraform plan
+terraform apply
+```
+
+Le frontend dispose en plus d'un workflow GitHub Actions de déploiement automatique sur `main` : [/.github/workflows/deploy-frontend-dev.yml](.github/workflows/deploy-frontend-dev.yml).
+
+## État d'Avancement et Honnêteté Technique
+
+Le dépôt contient un noyau fonctionnel cohérent sur les parcours principaux de catalogue, lecture, historique, statistiques et indexation. En revanche, certaines briques existent encore sous forme de placeholders et doivent être considérées comme incomplètes tant qu'elles ne sont pas finalisées de bout en bout :
+
+- `api_post_listening_event`
+- `event_publish_notifications`
+- `tech_ingest_audio_metadata`
+
+Cette distinction est importante pour conserver une documentation fiable au niveau architecture et delivery.
+
+## Documentation Complémentaire
+
+Le dossier [doc](doc) est prévu pour accueillir les diagrammes d'architecture, les diagrammes métier et les vues de référence du système.
 - **API Gateway** : Point d'entrée REST avec authentification
 - **Lambdas API** : Traitement synchrone des requêtes utilisateur
 - **EventBridge/SQS** : Découplage pour les traitements asynchrones
