@@ -102,3 +102,19 @@ variable "system_log_level" {
   type    = string
   default = "WARN"
 }
+
+
+variable "publish" {
+  type    = bool
+  default = false
+}
+
+variable "alias_name" {
+  type    = string
+  default = null
+}
+
+variable "provisioned_concurrency" {
+  type    = number
+  default = null
+}

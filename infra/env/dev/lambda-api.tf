@@ -71,6 +71,10 @@ locals {
         OPENSEARCH_ENDPOINT = module.opensearch.domain_endpoint
         OPENSEARCH_INDEX    = "tracks"
       }
+
+      publish                  = true
+      alias_name               = "live"
+      provisioned_concurrency  = 2
       vpc_enabled = true
     }
 
@@ -131,7 +135,12 @@ module "api_lambdas" {
   layers = concat(
     [aws_lambda_layer_version.shared_logger.arn],
     contains(["api_search"], each.key) ? [aws_lambda_layer_version.python_requests.arn] : []
+
   )
+
+  publish                 = lookup(each.value, "publish", false)
+  alias_name              = lookup(each.value, "alias_name", null)
+  provisioned_concurrency = lookup(each.value, "provisioned_concurrency", null)
 }
 
 
@@ -151,7 +160,6 @@ resource "aws_lambda_permission" "api_permissions" {
     play_track             = { lambda = "api_start_stream", path = "POST/tracks/*/play" }
     get_user               = { lambda = "api_get_user", path = "GET/users/*" }
     post_listening_event   = { lambda = "api_post_listening_event", path = "POST/events/listening" }
-    search                 = { lambda = "api_search", path = "GET/search" }
   }
 
   statement_id  = "AllowApiGatewayInvoke-${each.key}"
@@ -159,4 +167,16 @@ resource "aws_lambda_permission" "api_permissions" {
   function_name = module.api_lambdas[each.value.lambda].lambda_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${module.api_gateway.execution_arn}/*/${each.value.path}"
+}
+
+
+
+# lambda permission for the search lambda with alias
+resource "aws_lambda_permission" "api_search_alias_permission" {
+  statement_id = "AllowApiGatewayInvoke-search-live"
+  action       = "lambda:InvokeFunction"
+  function_name = module.api_lambdas["api_search"].lambda_name
+  qualifier     = module.api_lambdas["api_search"].lambda_alias_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${module.api_gateway.execution_arn}/*/GET/search"
 }

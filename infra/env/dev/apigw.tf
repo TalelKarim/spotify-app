@@ -286,7 +286,7 @@ resource "aws_api_gateway_integration" "search" {
   http_method             = aws_api_gateway_method.search.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = module.api_lambdas["api_search"].invoke_arn
+  uri                     = module.api_lambdas["api_search"].lambda_alias_invoke_arn
 }
 
 # =========================================================

@@ -3,8 +3,6 @@ resource "aws_cloudwatch_log_group" "this" {
   retention_in_days = var.log_retention_days
 }
 
-
-
 resource "aws_lambda_function" "this" {
   function_name = var.function_name
   role          = var.role_arn
@@ -16,6 +14,7 @@ resource "aws_lambda_function" "this" {
 
   timeout     = var.timeout
   memory_size = var.memory_size
+  publish     = var.publish
 
   environment {
     variables = var.environment_variables
@@ -37,9 +36,24 @@ resource "aws_lambda_function" "this" {
 
   logging_config {
     log_format            = var.log_format
-
     application_log_level = var.log_format == "JSON" ? var.application_log_level : null
     system_log_level      = var.log_format == "JSON" ? var.system_log_level : null
     log_group             = aws_cloudwatch_log_group.this.name
   }
+}
+
+resource "aws_lambda_alias" "this" {
+  count = var.alias_name != null ? 1 : 0
+
+  name             = var.alias_name
+  function_name    = aws_lambda_function.this.function_name
+  function_version = aws_lambda_function.this.version
+}
+
+resource "aws_lambda_provisioned_concurrency_config" "this" {
+  count = var.provisioned_concurrency != null && var.alias_name != null ? 1 : 0
+
+  function_name                     = aws_lambda_function.this.function_name
+  qualifier                         = aws_lambda_alias.this[0].name
+  provisioned_concurrent_executions = var.provisioned_concurrency
 }
