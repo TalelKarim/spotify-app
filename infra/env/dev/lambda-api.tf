@@ -72,10 +72,10 @@ locals {
         OPENSEARCH_INDEX    = "tracks"
       }
 
-      publish                  = true
-      alias_name               = "live"
-      provisioned_concurrency  = 2
-      vpc_enabled = true
+      publish                 = true
+      alias_name              = "live"
+      provisioned_concurrency = 2
+      vpc_enabled             = true
     }
 
     api_get_track_stats = {
@@ -173,8 +173,8 @@ resource "aws_lambda_permission" "api_permissions" {
 
 # lambda permission for the search lambda with alias
 resource "aws_lambda_permission" "api_search_alias_permission" {
-  statement_id = "AllowApiGatewayInvoke-search-live"
-  action       = "lambda:InvokeFunction"
+  statement_id  = "AllowApiGatewayInvoke-search-live"
+  action        = "lambda:InvokeFunction"
   function_name = module.api_lambdas["api_search"].lambda_name
   qualifier     = module.api_lambdas["api_search"].lambda_alias_name
   principal     = "apigateway.amazonaws.com"
