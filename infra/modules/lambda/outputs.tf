@@ -19,13 +19,6 @@ output "log_group_arn" {
 }
 
 
-output "lambda_name" {
-  value = aws_lambda_function.this.function_name
-}
-
-output "lambda_arn" {
-  value = aws_lambda_function.this.arn
-}
 
 output "lambda_version" {
   value = aws_lambda_function.this.version
